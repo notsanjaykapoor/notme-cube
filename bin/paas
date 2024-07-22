@@ -1,0 +1,142 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import time
+
+sys.path.append(".")
+
+import click
+import dotenv
+
+dotenv.load_dotenv()
+
+
+import services.ssh
+import services.vps
+
+
+@click.group()
+def cli():
+    pass
+
+
+@click.command()
+@click.option("--instance", default=None, required=True, help="instance name")
+@click.option("--cloud", default=None, required=True, help="cloud name")
+@click.option("--user", default="", required=False, help="ssh user name")
+def list(instance: str, cloud: str, user: str):
+    """
+    list running apps
+    """
+    time_start_unix = time.time()
+
+    user = user or services.ssh.user()
+
+    # map instance to machine
+
+    list_result = services.vps.list(cloud=cloud)
+
+    if not (machine := list_result.map.get(instance)):
+        _print_error("machine invalid")
+        exit(1)
+
+    _print_status(f"paas list machine '{machine.name}' host '{machine.ip}' user '{user}'")
+
+    code, result = services.ssh.exec(host=machine.ip, user=user, cmd="sudo docker ps")
+
+    if code != 0:
+        _print_error(f"paas list error {result}")
+        exit(code)
+
+    _print_status("docker apps:")
+    print(result) # xxx
+
+    time_end_unix = time.time()
+    time_secs = round((time_end_unix - time_start_unix), 2)
+
+    _print_ok(f"paas list completed in {time_secs}s")
+
+
+@click.command()
+@click.option("--instance", default=None, required=True, help="instance name")
+@click.option("--cloud", default=None, required=True, help="cloud name")
+@click.option("--user", default="", required=False, help="ssh user name")
+def setup(instance: str, cloud: str, user: str):
+    """
+    setup host
+    """
+    time_start_unix = time.time()
+
+    user = user or services.ssh.user()
+
+    # map instance to machine
+
+    list_result = services.vps.list(cloud=cloud)
+
+    if not (machine := list_result.map.get(instance)):
+        _print_error("machine invalid")
+        exit(1)
+
+    _print_status(f"paas setup machine '{machine.name}' host '{machine.ip}' user '{user}'")
+
+    # check docker status
+
+    code, result = services.ssh.exec(host=machine.ip, user=user, cmd="which docker")
+
+    if code != 0:
+        _print_error(f"paas setup error {result}")
+        exit(code)
+
+    if "docker" not in result:
+        # install docker and related packages
+        _print_status("docker install ...")
+
+        code, result = services.ssh.exec(host=machine.ip, user=user, cmd=os.environ.get("DOCKER_INSTALL"))
+
+        if code != 0:
+            _print_error(f"paas setup error {result}")
+            exit(code)
+
+        _print_status("docker install ok")
+    else:
+        _print_status("docker ok")
+
+    # setup docker network
+
+    code, result = services.ssh.exec(host=machine.ip, user=user, cmd=os.environ.get("DOCKER_NETWORK_CREATE"))
+
+    if code != 0:
+        _print_error(f"paas setup error {result}")
+        exit(code)
+
+    code, result = services.ssh.exec(host=machine.ip, user=user, cmd="sudo docker network ls")
+
+    _print_status("docker networks:")
+    print(result) # xxx
+
+    # setup nginx
+
+    time_end_unix = time.time()
+    time_secs = round((time_end_unix - time_start_unix), 2)
+
+    _print_ok(f"paas setup completed in {time_secs}s")
+
+
+def _print_error(s: str):
+    print("\x1b[1;31m" + s + "\x1b[0m", flush=True)
+
+
+def _print_ok(s: str):
+    print("\x1b[1;32m" + s + "\x1b[0m", flush=True)
+
+
+def _print_status(s: str):
+    print("\x1b[1;36m" + s + "\x1b[0m", flush=True)
+
+
+cli.add_command(list)
+cli.add_command(setup)
+
+if __name__ == "__main__":
+    cli()

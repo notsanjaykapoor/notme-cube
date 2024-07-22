@@ -1,0 +1,26 @@
+<div class="col-start-2 col-span-10 mt-0 mx-0">
+    {% if query_code == 0 %}
+        <p class="text-xs font-bold text-black-700 py-2">
+        {{query_result}}
+        </p>
+    {% else %}
+        <p class="text-xs font-bold text-red-700 py-2">
+        {{query_result}}
+        </p>
+    {% endif %}
+</div>
+
+<table class="col-start-2 col-span-10 table-fixed">
+    <thead class="font-normal text-left text-xs leading-6 text-center text-zinc-800">
+        <tr>
+            <th class="p-4 pr-6 pl-0">name</th>
+            <th class="p-4 pr-6" style="width: 450px;">pass</th>
+            <th class="p-4 pr-6" style="width: 300px;">user</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for passw in passw_list %}
+            {% include "passw/list_passw.html" %}
+        {% endfor %}
+    </tbody>
+</table>
