@@ -7,7 +7,6 @@ import sqlmodel
 import context
 import log
 import main_shared
-import services.ssh
 import services.vps
 import services.vps.containers
 import services.vps.nats
@@ -44,7 +43,7 @@ def machine_containers_list(
         if not machine:
             return fastapi.responses.RedirectResponse("/machines")
 
-        list_result = services.vps.containers.list(ip=machine.ip, user=services.ssh.user(), query=query)
+        list_result = services.vps.containers.list(ip=machine.ip, user=machine.user, query=query)
         containers_list = list_result.objects
 
         query_code = list_result.code

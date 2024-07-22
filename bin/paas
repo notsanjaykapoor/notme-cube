@@ -31,8 +31,6 @@ def list(instance: str, cloud: str, user: str):
     """
     time_start_unix = time.time()
 
-    user = user or services.ssh.user()
-
     # map instance to machine
 
     list_result = services.vps.list(cloud=cloud)
@@ -67,8 +65,6 @@ def setup(instance: str, cloud: str, user: str):
     setup host
     """
     time_start_unix = time.time()
-
-    user = user or services.ssh.user()
 
     # map instance to machine
 
