@@ -1,4 +1,4 @@
-import time
+import asyncio
 
 import sqlmodel
 
@@ -9,12 +9,13 @@ logger = log.init("app")
 
 
 class WorkHandler:
-    def call(db_session: sqlmodel.Session, workq: models.WorkQ) -> int:
+    async def call(db_session: sqlmodel.Session, workq: models.WorkQ) -> int:
         """
         Called in the context of a work queue worker to process a work object.
         """
 
         if workq.msg == "sleep":
-            time.sleep(workq.data.get("seconds"))
+            seconds = int(workq.data.get("seconds") or 0)
+            await asyncio.sleep(seconds)
 
         return 0

@@ -1,34 +1,38 @@
 <div class="col-start-2 col-span-10 mt-0 mx-0">
     {% if query_code == 0 %}
         <p class="text-xs font-bold text-black-700 py-2">
-        {{query_result}}
+            {{query_result}}
 
-        <span class="float-right text-orange-600">
-            workers: {{ workers_count }}
-        </span>
+            <span class="float-right text-orange-600">
+                workers: {{ workers_count }}
+                &nbsp;
+                backlog: {{ backlog_count }}
+            </span>
         </p>
     {% else %}
         <p class="text-xs font-bold text-red-700 py-2">
-        {{query_result}}
+            {{query_result}}
 
-        <span class="float-right text-orange-600">
-            workers: {{ workers_count }}
-        </span>
+            <span class="float-right text-orange-600">
+                workers: {{ workers_count }}
+                &nbsp;
+                backlog: {{ backlog_count }}
+            </span>
         </p>
     {% endif %}
 </div>
 
-<table class="col-start-2 col-span-10">
+<table class="col-start-2 col-span-10 mt-5">
     <thead class="font-normal text-left text-xs leading-6 text-center text-zinc-800">
         <tr>
-        <th class="p-4 pr-6 pl-0">name</th>
-        <th class="p-4 pr-6">partition</th>
-        <th class="p-4 pr-6">msg</th>
-        <th class="p-4 pr-6">state</th>
-        <th class="p-4 pr-6">worker</th>
-        <th class="p-4 pr-6">time</th>
-        <th class="p-4 pr-6">timestamp</th>
-        <th class="p-4 pr-0">id</th>
+            <th class="p-4 pr-6 pl-0">name</th>
+            <th class="p-4 pr-6">partition</th>
+            <th class="p-4 pr-6">msg</th>
+            <th class="p-4 pr-6">state</th>
+            <th class="p-4 pr-6">worker</th>
+            <th class="p-4 pr-6">time</th>
+            <th class="p-4 pr-6">timestamp</th>
+            <th class="p-4 pr-0">id</th>
         </tr>
     </thead>
     <tbody>
@@ -40,11 +44,11 @@
             <td class="p-4 pr-6 font-normal">
             {% if workq.state == "error" %}
                 <span class="cursor-help font-bold text-red-800" title="error message todo">
-                {{workq.state}}
+                    {{workq.state}}
                 </span>
             {% elif workq.state == "completed" %}
                 <span class="font-bold text-blue-700">
-                {{workq.state}}
+                    {{workq.state}}
                 </span>
             {% else %}
                 {{workq.state}}

@@ -24,18 +24,49 @@ app_version = os.environ["APP_VERSION"]
 
 
 @app.get("/passw", response_class=fastapi.responses.HTMLResponse)
+def passw_orgs_list(
+    request: fastapi.Request,
+):
+    logger.info(f"{context.rid_get()} passw list orgs")
+
+    try:
+        list_result = services.passw.orgs_list()
+        orgs_list = list_result.orgs
+    except Exception as e:
+        orgs_list = []
+        logger.error(f"{context.rid_get()} passw list orgs exception '{e}'")
+
+
+    try:
+        response = templates.TemplateResponse(
+            request,
+            "passw/orgs/list.html",
+            {
+                "app_name": "Pass",
+                "app_version": app_version,
+                "orgs_list": orgs_list,
+            }
+        )
+    except Exception as e:
+        logger.error(f"{context.rid_get()} passw list orgs render exception '{e}'")
+        return templates.TemplateResponse(request, "500.html", {})
+
+    return response
+
+
+@app.get("/passw/orgs/{org}", response_class=fastapi.responses.HTMLResponse)
 def passw_list(
     request: fastapi.Request,
+    org: str,
     query: str="",
     offset: int=0,
     limit: int=50,
-    db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
-    logger.info(f"{context.rid_get()} pass query '{query}'")
+    logger.info(f"{context.rid_get()} passw list org '{org}' query '{query}'")
 
     try:
         list_result = services.passw.list(
-            db_session=db_session,
+            org=org,
             query=query,
             offset=offset,
             limit=limit,
@@ -47,7 +78,7 @@ def passw_list(
         passw_list = []
         query_code = 400
         query_result = f"exception {e}"
-        logger.error(f"{context.rid_get()} workq exception '{e}'")
+        logger.error(f"{context.rid_get()} passw exception '{e}'")
 
     if "HX-Request" in request.headers:
         template = "passw/list_table.html"
@@ -61,6 +92,7 @@ def passw_list(
             {
                 "app_name": "Pass",
                 "app_version": app_version,
+                "org": org,
                 "passw_list": passw_list,
                 "prompt_text": "search",
                 "query": query,
@@ -69,7 +101,7 @@ def passw_list(
             }
         )
     except Exception as e:
-        logger.error(f"{context.rid_get()} workq render exception '{e}'")
+        logger.error(f"{context.rid_get()} passw render exception '{e}'")
         return templates.TemplateResponse(request, "500.html", {})
 
     if "HX-Request" in request.headers:
@@ -81,16 +113,16 @@ def passw_list(
 @app.get("/passw/decrypt", response_class=fastapi.responses.HTMLResponse)
 def passw_decrypt(
     request: fastapi.Request,
+    org: str,
     name: str,
-    db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
-    logger.info(f"{context.rid_get()} pass decrypt '{name}'")
+    logger.info(f"{context.rid_get()} passw decrypt org '{org}' name '{name}'")
 
     try:
-        passw = services.passw.get_by_name(name=name)
+        passw = services.passw.get_by_name(org=org, name=name)
         passw = services.passw.decrypt(passw=passw)
     except Exception as e:
-        logger.error(f"{context.rid_get()} pass decrypt exception '{e}'")
+        logger.error(f"{context.rid_get()} passw decrypt exception '{e}'")
         passw = None
 
     try:
@@ -100,11 +132,44 @@ def passw_decrypt(
             {
                 "app_name": "Pass",
                 "app_version": app_version,
+                "org": org,
                 "passw": passw
             }
         )
     except Exception as e:
-        logger.error(f"{context.rid_get()} workq render exception '{e}'")
+        logger.error(f"{context.rid_get()} passw decrypt render exception '{e}'")
+        return templates.TemplateResponse(request, "500.html", {})
+    
+    return response
+
+
+@app.get("/passw/encrypt", response_class=fastapi.responses.HTMLResponse)
+def passw_encrypt(
+    request: fastapi.Request,
+    org: str,
+    name: str,
+):
+    logger.info(f"{context.rid_get()} passw encrypt org '{org}' name '{name}'")
+
+    try:
+        passw = services.passw.get_by_name(org=org, name=name)
+    except Exception as e:
+        logger.error(f"{context.rid_get()} passw encrypt exception '{e}'")
+        passw = None
+
+    try:
+        response = templates.TemplateResponse(
+            request,
+            "passw/list_passw.html",
+            {
+                "app_name": "Pass",
+                "app_version": app_version,
+                "org": org,
+                "passw": passw
+            }
+        )
+    except Exception as e:
+        logger.error(f"{context.rid_get()} passw encrypt render exception '{e}'")
         return templates.TemplateResponse(request, "500.html", {})
     
     return response

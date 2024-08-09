@@ -1,0 +1,18 @@
+<table class="col-start-2 col-span-10 mt-5 table-fixed">
+    <thead class="font-normal text-left text-xs leading-6 text-center text-zinc-800">
+        <tr>
+            <th class="p-4 pr-6 pl-0">org</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for org in orgs_list %}
+            <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
+                <td class="p-4 pr-6 font-normal">
+                    <a href="/passw/orgs/{{ org }}" class="font-bold text-blue-700">
+                        {{ org }}
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

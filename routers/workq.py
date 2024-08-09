@@ -7,6 +7,7 @@ import sqlmodel
 import context
 import log
 import main_shared
+import models
 import services.workq
 import services.workers
 
@@ -45,7 +46,10 @@ def workq_list(
 
         workers_list_result = services.workers.list(db_session=db_session, query=query, offset=offset, limit=limit)
         workers_count = len(workers_list_result.objects)
+
+        backlog_count = services.workq.count_queued(db_session=db_session, queue=models.workq.QUEUE_WORK)
     except Exception as e:
+        backlog_count = 0
         workq_objects = []
         workers_count = 0
         query_code = 400
@@ -64,6 +68,7 @@ def workq_list(
             {
                 "app_name": "WorkQ",
                 "app_version": app_version,
+                "backlog_count": backlog_count,
                 "prompt_text": "search",
                 "query": query,
                 "query_code": query_code,

@@ -20,7 +20,7 @@ def decrypt(passw: models.Passw) -> models.Passw:
 
     passw.passw = secret
 
-    if other and re.search(r"^(email:|user:)", other[0]):
+    if other and re.search(r"^(email:|id.*:|user.*:)", other[0]):
         passw.user = other[0].split(":")[1].strip()
 
     return passw

@@ -1,20 +1,21 @@
 <div class="col-start-2 col-span-10 mt-0 mx-0">
     {% if query_code == 0 %}
         <p class="text-xs font-bold text-black-700 py-2">
-        {{query_result}}
+            {{query_result}}
         </p>
     {% else %}
         <p class="text-xs font-bold text-red-700 py-2">
-        {{query_result}}
+            {{query_result}}
         </p>
     {% endif %}
 </div>
 
-<table class="col-start-2 col-span-10 table-fixed">
+<table class="col-start-2 col-span-10 mt-5 table-fixed">
     <thead class="font-normal text-left text-xs leading-6 text-center text-zinc-800">
         <tr>
-            <th class="p-4 pr-6 pl-0">name</th>
-            <th class="p-4 pr-6" style="width: 450px;">pass</th>
+            <th class="p-4 pr-6 pl-0">org</th>
+            <th class="p-4 pr-6">name</th>
+            <th class="p-4 pr-6" style="width: 350px;">pass</th>
             <th class="p-4 pr-6" style="width: 300px;">user</th>
         </tr>
     </thead>

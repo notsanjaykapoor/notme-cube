@@ -2,7 +2,6 @@ import dataclasses
 import glob
 import os
 import re
-import time
 
 import sqlmodel
 
@@ -18,9 +17,9 @@ class Struct:
     errors: list[str]
 
 
-def list(db_session: sqlmodel.Session, query: str, offset: int, limit: int) -> Struct:
+def list(org: str, query: str, offset: int, limit: int) -> Struct:
     """
-    list all password store files
+    list org password store files
     """
     struct = Struct(
         code=0,
@@ -32,11 +31,14 @@ def list(db_session: sqlmodel.Session, query: str, offset: int, limit: int) -> S
     dir_uri= os.environ.get("PASS_DIR_URI")
     source_host, source_dir, _ = services.passw.file_uri_parse(source_uri=dir_uri)
 
-    files = glob.glob(f"{source_dir}**/*.gpg", recursive=True)
+    files = glob.glob(f"{source_dir}{org}/*.gpg", recursive=True)
 
     for file in files:
         match = re.match(rf"({source_dir})(.+)\.gpg", file)
         file_name = match[2] # e.g. notme/goog, without the .gpg extension
+
+        if org:
+            file_name = file_name.replace(f"{org}/", "", 1) # strip org from file_name
 
         if not query or query in file_name:
             file_uri = f"file://{source_host}/{file}"

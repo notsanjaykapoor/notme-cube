@@ -11,12 +11,19 @@
     <div class="col-start-2 col-span-10 mt-2 opacity-50 text-center text-xs text-zinc-400">
         @{{ app_version }}
     </div>
+    <div class="col-start-2 col-span-10 px-0 mt-5 text-xs text-zinc-400">
+        <a href="/passw" class="text-blue-700 font-bold">
+          passw
+        </a>
+        &nbsp;/&nbsp;
+        {{ org }}
+    </div>
 </div>
 
 <form>
     <div class="container grid grid-cols-12 mt-10">
         <div class="col-start-2 col-span-4 font-normal text-xs mx-0">
-        <input type="search" name="query" value="{{query}}" placeholder="{{prompt_text}}" autocomplete="off" hx-get="/passw" hx-target="#passw-table" hx-trigger="input changed delay:750ms, search" class="peer px-0 py-2.5 mx-0 h-full w-full border-b bg-transparent font-sans text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border-blue-gray-200 focus:border-pink-600 focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50">
+            <input type="search" name="query" value="{{query}}" placeholder="{{prompt_text}}" autocomplete="off" hx-get="/passw/orgs/{{org}}" hx-target="#passw-table" hx-trigger="input changed delay:750ms, search" class="search-primary px-0 py-2.5 mx-0 h-full w-full border-b bg-transparent font-sans outline outline-0 transition-all placeholder-shown:border-blue-gray-200 focus:border-blue-300 focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50">
         </div>
     </div>
 </form>
@@ -24,5 +31,26 @@
 <div class="container grid grid-cols-12 mt-10" id="passw-table">
     {% include "passw/list_table.html" %}
 </div>
+
+<script>
+    function random_int(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    setInterval(function() {
+        const node_list = document.querySelectorAll("[data-secret='1']")
+
+        for (let node of node_list) {
+            node.dataset.epoch = parseInt(node.dataset.epoch) + 1
+
+            if (node.dataset.epoch >= 5) {
+                node.dataset.secret = 0
+                // node.querySelector("span").innerHTML = "*".repeat(random_int(5,15))
+                node.querySelector("span").dispatchEvent(new Event("encrypt"))
+            }
+        }
+    }, 3000)
+
+</script>
 
 {% endblock %}

@@ -135,9 +135,13 @@ def machines_list(
 
     for cloud in clouds_list:
         list_result = services.vps.list(cloud=cloud, query=query)
-        machines_list.extend(list_result.objects)
+        machines_list.extend(
+            sorted(list_result.objects, key=lambda m: m.name)
+        )
         query_seconds += list_result.seconds
         query_code = list_result.code
+
+    query_seconds = round(query_seconds, 2)
 
     for machine in machines_list:
         # check nat

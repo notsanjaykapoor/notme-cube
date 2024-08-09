@@ -6,20 +6,22 @@
     {% endif %}
 </div>
   
-<table class="col-start-2 col-span-10" id="machines-table">
+<table class="col-start-2 col-span-10 mt-5" id="machines-table">
     <thead class="font-normal text-center text-xs leading-6 text-zinc-800">
         <tr>
-            <th class="p-4 pr-6 pl-2">name</th>
-            <th class="p-4 pr-6">image</th>
+            <th class="p-4">name</th>
+            <th class="p-4">image</th>
+            <th class="p-4 pr-0"></th>
         </tr>
     </thead>
     <tbody>
         {% for container in containers_list %}
         <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
-            <td class="p-4 pr-6 pl-2 font-normal">
+            <td class="p-4 font-normal">
                 {{ container.name }}
             </td>
-            <td class="p-4 pr-0 font-normal">{{ container.image }}</td>
+            <td class="p-4 font-normal">{{ container.image }}</td>
+            <td class="p-4 pr-0 font-normal opacity-30">ssh {{ machine.user }}@{{ machine.ip }}</td>
         </tr>
         {% endfor %}
     </tbody>

@@ -4,11 +4,11 @@ import models
 import services.passw
 
 
-def get_by_name(name: str) -> models.Passw | None:
+def get_by_name(org: str, name: str) -> models.Passw | None:
     dir_uri= os.environ.get("PASS_DIR_URI")
     source_host, source_dir, _ = services.passw.file_uri_parse(source_uri=dir_uri)
 
-    file_path = f"{source_dir}{name}"
+    file_path = f"{source_dir}{org}/{name}"
 
     if not file_path.endswith("gpg"):
         file_path = f"{file_path}.gpg"

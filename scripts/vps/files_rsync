@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+
+import argparse
+import glob
+import subprocess
+import sys
+
+sys.path.append(".")
+
+VPS_DIR = "./scripts/vps"
+
+
+def _print_error(s: str):
+    print("\x1b[1;31m" + s + "\x1b[0m", flush=True)
+
+
+def _print_ok(s: str):
+    print("\x1b[1;32m" + s + "\x1b[0m", flush=True)
+
+
+def _print_status(s: str):
+    print("\x1b[1;36m" + s + "\x1b[0m", flush=True)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="copy boot files to vps")
+    parser.add_argument("--ssh", help="ssh user and host, e.g. user@host", type=str)
+    parser.add_argument("--dir", help="host directory to copy files", type=str, default="~")
+
+    pargs = parser.parse_args()
+
+    if not pargs.ssh:
+        parser.print_help()
+        exit(0)
+
+    files = glob.glob(f"{VPS_DIR}/.*") + glob.glob(f"{VPS_DIR}/*")
+    files = [s for s in files if "rsync" not in s]
+    files_str = " ".join(files)
+    unix_cmd = f"rsync -e 'ssh -o ConnectTimeout=10' {files_str} {pargs.ssh}:{pargs.dir}"
+
+    print("files rsync", flush=True, end=" ... ")
+    _print_status(unix_cmd)
+
+    response = subprocess.run(unix_cmd, shell=True, capture_output=True)
+
+    if response.returncode != 0:
+        _print_error(f"file rsync error {response.stderr.decode()}")
+        exit(response.returncode)
+
+    _print_ok("files rsync ok")
+

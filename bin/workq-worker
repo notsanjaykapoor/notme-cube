@@ -16,7 +16,9 @@ import nats
 import ulid
 
 import log
+import models
 import services.database
+import services.nats
 import services.workq
 
 
@@ -24,6 +26,7 @@ logger = log.init("api")
 
 shutdown: bool = False
 
+worker_me: dict = {}
 
 def coro(f):
     @functools.wraps(f)
@@ -63,14 +66,17 @@ async def run(db_uri: str, queue: str, interval: int, id: str) -> dict:
         logger.error(f"workq worker queue '{queue}' handler required")
         exit(1)
 
-    worker_id = id or ulid.new().str
+    worker_me["id"] = id or ulid.new().str
+    worker_me["state"] = models.worker.STATE_IDLE
+
+    worker_id = worker_me.get("id")
 
     nats_client = await nats.connect(os.environ.get("NATS_URI"))
 
     logger.info(f"workq worker '{worker_id}' queue '{queue}' nats client {nats_client.client_id}")
 
     _task = asyncio.create_task(
-        pong_task(nats_client=nats_client, worker_id=worker_id, interval=15)
+        pong_task(nats_client=nats_client, interval=15)
     )
 
     while not shutdown:
@@ -87,11 +93,13 @@ async def run(db_uri: str, queue: str, interval: int, id: str) -> dict:
             break
 
         async for msg in nats_sub.messages:
-            msg_data_dict = json.loads(msg.data.decode())
-            msg_id = msg_data_dict.get("id")
+            msg_dict = services.nats.msg_decode(b=msg.data)
+            msg_id = msg_dict.get("id")
 
             with services.database.session.get() as db_session:
                 workq = services.workq.get_by_id(db_session=db_session, id=msg_id)
+
+                worker_me["state"] = models.worker.STATE_BUSY
 
                 services.workq.state_processing(
                     db_session=db_session,
@@ -101,8 +109,8 @@ async def run(db_uri: str, queue: str, interval: int, id: str) -> dict:
 
                 logger.info(f"workq worker '{worker_id}' queue '{queue}' message {workq.id} processing")
 
-                respond_dict = msg_data_dict | {"worker": worker_id}
-                await msg.respond(json.dumps(respond_dict).encode())
+                reply_dict = msg_dict | {"worker": worker_id}
+                await msg.respond(services.nats.msg_encode(d = reply_dict))
                 await nats_sub.drain()
 
                 logger.info(f"workq worker '{worker_id}' queue '{queue}' message {workq.id} nats ack")
@@ -110,42 +118,41 @@ async def run(db_uri: str, queue: str, interval: int, id: str) -> dict:
                 try:
                     # process message
                     handler = services.workq.route(queue=queue)
-                    handler.call(db_session=db_session, workq=workq)
+                    await handler.call(db_session=db_session, workq=workq)
 
-                    # update work object state
                     services.workq.state_completed(db_session=db_session, workq=workq)
 
                     logger.info(f"workq worker '{worker_id}' queue '{queue}' message {workq.id} completed")
                 except Exception as e:
-                    # update work object state
                     services.workq.state_error(db_session=db_session, workq=workq)
                     logger.error(f"workq worker '{worker_id}' queue '{queue}' message {workq.id} exception {e}")
 
-                # loop exits here since we subscribed for 1 message
+                worker_me["state"] = models.worker.STATE_IDLE
+
+                # loop exits here since subscription was for 1 message
 
     logger.info(f"workq worker '{worker_id}' queue '{queue}' nats closing")
 
-    await nats_client.publish("workers.shutdown", json.dumps({"worker": worker_id}).encode())
+    await nats_client.publish("workers.shutdown", services.nats.msg_encode(d={"worker": worker_id}))
     await nats_client.drain()
     await nats_client.close()
 
     logger.info(f"workq worker '{worker_id}' queue '{queue}' exiting")
 
 
-async def pong_task(nats_client, worker_id: str, interval: int):
-    logger.info(f"workq worker '{worker_id}' pong task")
-
-    pong_msg = {
-        "worker": worker_id
-    }
+async def pong_task(nats_client, interval: int):
+    logger.info(f"workq worker '{worker_me.get('id')}' pong task")
 
     while True:
         if shutdown:
             break
-        await nats_client.publish("workers.pong", json.dumps(pong_msg).encode())
+
+        print("pong publish", worker_me) # xxx
+
+        await nats_client.publish("workers.pong", services.nats.msg_encode(d=worker_me))
         await asyncio.sleep(interval)
 
-    logger.info(f"workq worker '{worker_id}' pong task exiting")
+    logger.info(f"workq worker '{worker_me.get('id')}' pong task exiting")
 
     
 cli.add_command(run)

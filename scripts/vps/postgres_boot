@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import subprocess
+
+DOCKER_IMAGE = "postgres:16"
+
+ENV_FILE = ".env.boot"
+
+
+def _dot_env_boot(file: str) -> int:
+    """
+    simple dot env parser
+    """
+    if not os.path.exists(file):
+        return 1
+
+    with open(file, "r") as f:
+        lines = f.read().split("\n")
+        
+    for line in lines:
+        if not line or "=" not in line:
+            continue
+        
+        key, val = line.split("=")
+        os.environ[key] = val
+
+
+def _print_error(s: str):
+    print("\x1b[1;31m" + s + "\x1b[0m", flush=True)
+
+
+def _print_ok(s: str):
+    print("\x1b[1;32m" + s + "\x1b[0m", flush=True)
+
+
+def _print_status(s: str):
+    print("\x1b[1;36m" + s + "\x1b[0m", flush=True)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="postgres boot script")
+    parser.add_argument("--name", help="container name", type=str, default="postgres-prd")
+    parser.add_argument("--password", help="postgres password", type=str)
+    parser.add_argument("--port", help="postgres exposed port", type=int, default=5433)
+    parser.add_argument("--mount", help="postgres mount directory, e.g. /mnt/volume/postgres", type=str)
+    parser.add_argument("--network", help="docker network, e.g. bridge, notme", type=str, default="bridge")
+
+    pargs = parser.parse_args()
+
+    _dot_env_boot(file=ENV_FILE)
+
+    mount = pargs.mount or os.environ.get("POSTGRES_MOUNT")
+    password = pargs.password or os.environ.get("POSTGRES_PASS")
+
+    if not pargs.name or not mount or not password:
+        parser.print_help()
+        exit(0)
+
+    response = subprocess.run(f"docker ps -a -f name={pargs.name}", shell=True, capture_output=True)
+
+    if response.returncode != 0:
+        _print_error(f"postgres boot error {response.stderr.decode()}")
+        exit(response.returncode)
+
+    containers_list = response.stdout.decode()
+
+    if pargs.name in containers_list:
+        _print_status(f"postgres '{pargs.name}' running")
+        exit(0)
+
+    docker_cmd_tokens = [
+        f"docker run -d --name {pargs.name}",
+        f"-e POSTGRES_PASSWORD={password}",
+        "-e PGDATA=/var/lib/postgresql/data/pgdata",
+        f"-v {mount}:/var/lib/postgresql/data",
+        f"-p {pargs.port}:5432",
+        f"--network {pargs.network}",
+    ]
+    docker_cmd = " ".join(docker_cmd_tokens + [DOCKER_IMAGE])
+    _print_status(f"postgres boot ... {docker_cmd}")
+
+    response = subprocess.run(docker_cmd, shell=True, capture_output=True)
+
+    if response.returncode != 0:
+        _print_error(f"postgres boot error {response.stderr.decode()}")
+        exit(response.returncode)
+
+    _print_status("postgres boot ok")
+

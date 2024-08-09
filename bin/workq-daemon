@@ -1,0 +1,181 @@
+#!/usr/bin/env python
+
+import functools
+import json
+import os
+import signal
+import sys
+
+sys.path.append(".")
+
+import dot_init
+
+import asyncio
+import click
+import nats
+
+import log
+import models
+import services.database
+import services.nats
+import services.workq
+import services.workers
+
+logger = log.init("api")
+
+shutdown: bool = False
+
+workers_set = set()
+
+def coro(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
+
+
+@click.group()
+def cli():
+    pass
+
+
+def signal_handler(signum, frame):
+    global shutdown
+    shutdown = True
+    logger.info("workq daemon signal handler ... preparing to shutdown")
+
+
+@click.command()
+@click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
+@click.option('--queue', default=None, required=True, help="work queue name")
+@click.option('--interval', default=5, required=False, help="")
+@coro
+async def run(db_uri: str, queue: str, interval: int) -> dict:
+    """
+    The daemon manages routing new messages as they are added to the 'queue' and scaling up/down workers based on the 
+    size of the queue backlog.
+
+    The routing component monitors the workq for new messages and routes these messages to workers using a nats queue group.
+
+    The scaler component monitors the backlog count vs the workers count.  If there are not enough workers to handle the backlog,
+    new worker(s) are added.
+    """
+    db_uri = db_uri or os.environ.get("DATABASE_URL")
+
+    if not db_uri:
+        raise ValueError("db_uri is invalid or missing")
+
+    # install signal handler
+    signal.signal(signal.SIGINT, signal_handler)
+
+    with services.database.session.get() as db_session:
+        # clear workers table
+        services.workers.truncate(db_session=db_session)
+
+        # todo - find jobs that were not finished by this worker
+        # cleanup_count = services.workq.cleanup(
+        #     db_session=db_session,
+        #     queue=queue,
+        #     partition=-1,
+        # )
+
+    logger.info(f"workq daemon queue '{queue}'")
+
+    nats_client = await nats.connect(os.environ.get("NATS_URI"))
+
+    _nats_sub = await nats_client.subscribe("workers.*", "", message_handler)
+
+    logger.info(f"workq daemon queue '{queue}' nats client {nats_client.client_id}")
+
+    while not shutdown:
+        with services.database.session.get() as db_session:
+            # get next queued job
+            workq = services.workq.get_queued(
+                db_session=db_session,
+                queue=queue,
+                partition=-1,
+            )
+
+            if not workq:
+                logger.info(f"workq daemon queue '{queue}' sleep {interval}")
+                await asyncio.sleep(interval)
+                continue
+
+            workers_count = services.workers.count(db_session=db_session)
+            backlog_count = services.workq.count_queued(db_session=db_session, queue=models.workq.QUEUE_WORK)
+
+            logger.info(f"workq daemon queue '{queue}' id {workq.id} request - workers {workers_count} backlog {backlog_count}")
+
+            # schedule job using nats queue group
+            await work_request(
+                nats_client=nats_client,
+                queue=queue,
+                workq=workq,
+                interval=interval,
+            )
+
+    logger.info(f"workq daemon queue '{queue}' nats closing")
+
+    await nats_client.close()
+
+    logger.info(f"workq daemon queue '{queue}' exiting")
+
+
+async def message_handler(msg):
+    msg_data = json.loads(msg.data.decode())
+    worker_id = msg_data.get("worker")
+    worker_state = msg_data.get("state") or ""
+
+    with services.database.session.get() as db_session:
+        if msg.subject.endswith("pong"):
+            logger.info(f"workq daemon pong {msg_data}")
+            workers_set.add(worker_id)
+
+            # get/create worker and update state
+            services.workers.get_or_create(
+                db_session=db_session, name=worker_id, state=worker_state
+            )
+        elif msg.subject.endswith("shutdown"):
+            logger.info(f"workq daemon shutdown {msg_data}")
+            workers_set.remove(worker_id)
+
+            # remove worker
+            services.workers.delete_by_name(db_session=db_session, name=worker_id)
+
+    logger.info(f"workq daemon workers count {len(workers_set)}")
+
+
+async def work_request(nats_client, queue: str, workq: models.WorkQ, interval: int) -> int:
+     while not shutdown:
+        try:
+            request_msg = {
+                "id": workq.id
+            }
+            response = await nats_client.request(queue, services.nats.msg_encode(d=request_msg), timeout=5)
+            response_msg = services.nats.msg_decode(b=response.data)
+            worker_id = response_msg.get("worker")
+
+            logger.info(f"workq daemon queue '{queue}' id {workq.id} response {response_msg}")
+
+            with services.database.session.get() as db_session:
+                services.workers.state_busy(
+                    db_session=db_session,
+                    name=worker_id,
+                )
+
+            return 0
+        except nats.errors.NoRespondersError as e:
+            # no responders, either all workers are busy or there are no workers
+            logger.error(e)
+        except nats.errors.TimeoutError as e:
+            # timeouts should not happen
+            logger.error(f"nats timeout exception - {e}")
+
+        await asyncio.sleep(interval)
+
+
+cli.add_command(run)
+
+if __name__ == "__main__":
+    asyncio.run(cli())

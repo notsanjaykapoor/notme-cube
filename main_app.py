@@ -4,6 +4,7 @@ import contextlib
 import dot_init
 import fastapi
 import fastapi.middleware.cors
+import fastapi.staticfiles
 import fastapi.templating
 import starlette.middleware.sessions
 import ulid
@@ -32,6 +33,9 @@ app = fastapi.FastAPI(lifespan=lifespan)
 app.include_router(routers.machines.app)
 app.include_router(routers.passw.app)
 app.include_router(routers.workq.app)
+
+# mount traditional static directory
+app.mount("/static", fastapi.staticfiles.StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     fastapi.middleware.cors.CORSMiddleware,
