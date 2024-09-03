@@ -43,7 +43,7 @@
         for (let node of node_list) {
             node.dataset.epoch = parseInt(node.dataset.epoch) + 1
 
-            if (node.dataset.epoch >= 5) {
+            if (node.dataset.epoch >= 2) {
                 node.dataset.secret = 0
                 // node.querySelector("span").innerHTML = "*".repeat(random_int(5,15))
                 node.querySelector("span").dispatchEvent(new Event("encrypt"))

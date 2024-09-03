@@ -31,14 +31,16 @@ def list(org: str, query: str, offset: int, limit: int) -> Struct:
     dir_uri= os.environ.get("PASS_DIR_URI")
     source_host, source_dir, _ = services.passw.file_uri_parse(source_uri=dir_uri)
 
-    files = glob.glob(f"{source_dir}{org}/*.gpg", recursive=True)
+    files = sorted(
+        glob.glob(f"{source_dir}{org}/*.gpg", recursive=True)
+    )
 
     for file in files:
         match = re.match(rf"({source_dir})(.+)\.gpg", file)
         file_name = match[2] # e.g. notme/goog, without the .gpg extension
 
         if org:
-            file_name = file_name.replace(f"{org}/", "", 1) # strip org from file_name
+            file_name = file_name.replace(f"{org}/", "", 1) # strip org from file_name, notme/goog become goog
 
         if not query or query in file_name:
             file_uri = f"file://{source_host}/{file}"

@@ -31,7 +31,8 @@ async def lifespan(app: fastapi.FastAPI):
 app = fastapi.FastAPI(lifespan=lifespan)
 
 app.include_router(routers.machines.app)
-app.include_router(routers.passw.app)
+app.include_router(routers.passw_list.app)
+app.include_router(routers.passw_manage.app)
 app.include_router(routers.workq.app)
 
 # mount traditional static directory

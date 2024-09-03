@@ -1,5 +1,7 @@
 import re
 
+import gnupg
+
 
 def file_uri_parse(source_uri: str) -> tuple[str, str, str]:
     """
@@ -24,3 +26,12 @@ def file_uri_parse(source_uri: str) -> tuple[str, str, str]:
         source_file = match[2] 
 
     return source_host, source_dir, source_file
+
+
+def gpg_get(gpg_dir: str) -> gnupg.GPG:
+    """
+    get gpg object
+    """
+    _, source_dir, _ = file_uri_parse(source_uri=gpg_dir)
+
+    return gnupg.GPG(gnupghome=source_dir)

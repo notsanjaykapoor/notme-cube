@@ -41,18 +41,20 @@
             <td class="p-4 pr-6 pl-0 font-normal">{{ workq.name }}</td>
             <td class="p-4 pr-6 font-normal">{{ workq.partition }}</td>
             <td class="p-4 pr-6 font-normal">{{ workq.msg }}</td>
-            <td class="p-4 pr-6 font-normal">
-            {% if workq.state == "error" %}
-                <span class="cursor-help font-bold text-red-800" title="error message todo">
-                    {{workq.state}}
-                </span>
-            {% elif workq.state == "completed" %}
-                <span class="font-bold text-blue-700">
-                    {{workq.state}}
-                </span>
-            {% else %}
-                {{workq.state}}
-            {% endif %}
+            <td class="p-4 pr-6 font-bold">
+                {% if workq.state == "error" %}
+                    <span class="cursor-help text-red-800" title="error message todo">
+                        {{workq.state}}
+                    </span>
+                {% elif workq.state == "completed" %}
+                    <span class="text-blue-700">
+                        {{workq.state}}
+                    </span>
+                {% else %}
+                    <span>
+                        {{workq.state}}
+                    </span>
+                {% endif %}
             </td>
             <td class="p-4 pr-6 font-normal">{{ workq.worker }}</td>
             <td class="p-4 pr-6 font-normal">{{ workq.work_time }}</td>
