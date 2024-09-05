@@ -1,5 +1,6 @@
 import fastapi
 
+import context
 import services.database.session
 
 
@@ -12,3 +13,7 @@ def get_db():
 # async db dependency (e.g. gql)
 async def get_gql_context(db=fastapi.Depends(get_db)):
     return {"db": db}
+
+
+def get_user_id():
+    yield context.uid_get()

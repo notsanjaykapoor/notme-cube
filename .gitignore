@@ -12,3 +12,4 @@ sqlite*
 env/
 logs/
 **/*secret*.yml
+secrets/

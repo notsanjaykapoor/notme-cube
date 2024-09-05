@@ -12,7 +12,12 @@ import ulid
 import context
 import log
 import routers
+import routers.machines
+import routers.passw
+import routers.users
+import routers.workq
 import services.database
+import services.users
 
 logger = log.init("api")
 
@@ -30,10 +35,12 @@ async def lifespan(app: fastapi.FastAPI):
 # create app object
 app = fastapi.FastAPI(lifespan=lifespan)
 
-app.include_router(routers.machines.app)
-app.include_router(routers.passw_list.app)
-app.include_router(routers.passw_manage.app)
-app.include_router(routers.workq.app)
+app.include_router(routers.machines.machines.app)
+app.include_router(routers.passw.passw_list.app)
+app.include_router(routers.passw.passw_manage.app)
+app.include_router(routers.users.login.app)
+app.include_router(routers.users.login_oauth.app)
+app.include_router(routers.workq.workq.app)
 
 # mount traditional static directory
 app.mount("/static", fastapi.staticfiles.StaticFiles(directory="static"), name="static")
@@ -48,14 +55,24 @@ app.add_middleware(
 
 app.add_middleware(
     starlette.middleware.sessions.SessionMiddleware,
-    secret_key=os.environ.get("FASTAPI_SESSION_KEY"),
+    secret_key=os.environ.get("FASTAPI_SESSION_KEY", ""),
     max_age=None,
 )
 
 @app.middleware("http")
-async def add_request_id(request: fastapi.Request, call_next):
+async def notme_middleware(request: fastapi.Request, call_next):
     # set request id context var
     context.rid_set(ulid.new().str)
+
+    # set user_id context var
+    session_id = request.cookies.get("session_id", "")
+    if jwt_user := services.users.jwt_token_decode(token=session_id):
+        user_id = jwt_user.get("user_id")
+    else:
+        user_id=0
+
+    context.uid_set(id=user_id)
+
     response = await call_next(request)
     return response
 

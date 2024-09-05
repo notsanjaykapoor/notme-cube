@@ -2,11 +2,13 @@ import os
 
 import fastapi
 import fastapi.responses
+import sqlmodel
 
 import context
 import log
 import main_shared
 import services.passw
+import services.users
 
 logger = log.init("app")
 
@@ -25,8 +27,13 @@ app_version = os.environ["APP_VERSION"]
 @app.get("/passw", response_class=fastapi.responses.HTMLResponse)
 def passw_orgs_list(
     request: fastapi.Request,
+    user_id: int = fastapi.Depends(main_shared.get_user_id),
+    db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
-    logger.info(f"{context.rid_get()} passw orgs list")
+    logger.info(f"{context.rid_get()} passw orgs list user_id {user_id}")
+
+    if user_id == 0:
+        return fastapi.responses.RedirectResponse("/users/login")
 
     try:
         list_result = services.passw.orgs_list()
@@ -38,6 +45,8 @@ def passw_orgs_list(
     if len(orgs_list) == 1:
         return fastapi.responses.RedirectResponse(f"/passw/orgs/{orgs_list[0]}")
 
+    user = services.users.get_by_id(db_session=db_session, id=user_id)
+
     try:
         response = templates.TemplateResponse(
             request,
@@ -46,6 +55,7 @@ def passw_orgs_list(
                 "app_name": "Pass",
                 "app_version": app_version,
                 "orgs_list": orgs_list,
+                "user": user,
             }
         )
     except Exception as e:
@@ -62,8 +72,15 @@ def passw_org_list(
     query: str="",
     offset: int=0,
     limit: int=50,
+    user_id: int = fastapi.Depends(main_shared.get_user_id),
+    db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
     logger.info(f"{context.rid_get()} passw org '{org}' list query '{query}'")
+
+    if user_id == 0:
+        return fastapi.responses.RedirectResponse("/users/login")
+
+    user = services.users.get_by_id(db_session=db_session, id=user_id)
 
     try:
         list_result = services.passw.list(
@@ -99,6 +116,7 @@ def passw_org_list(
                 "query": query,
                 "query_code": query_code,
                 "query_result": query_result,
+                "user": user,
             }
         )
     except Exception as e:
@@ -150,8 +168,12 @@ def passw_org_decrypt(
     request: fastapi.Request,
     org: str,
     name: str,
+    user_id: int = fastapi.Depends(main_shared.get_user_id),
 ):
     logger.info(f"{context.rid_get()} passw org '{org}' name '{name}' decrypt")
+
+    if user_id == 0:
+        return fastapi.responses.RedirectResponse("/users/login")
 
     try:
         passw = services.passw.get_by_name(org=org, name=name)

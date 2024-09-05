@@ -8,6 +8,7 @@ import context
 import log
 import main_shared
 import models
+import services.users
 import services.workq
 import services.workers
 
@@ -32,11 +33,17 @@ def workq_list(
     query: str="",
     offset: int=0,
     limit: int=50,
+    user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
     """
     """
     logger.info(f"{context.rid_get()} workq query '{query}'")
+
+    if user_id == 0:
+        return fastapi.responses.RedirectResponse("/users/login")
+
+    user = services.users.get_by_id(db_session=db_session, id=user_id)
 
     try:
         wq_list_result = services.workq.list(db_session=db_session, query=query, offset=offset, limit=limit)
@@ -73,6 +80,7 @@ def workq_list(
                 "query": query,
                 "query_code": query_code,
                 "query_result": query_result,
+                "user": user,
                 "workers_count": workers_count,
                 "workq_objects": workq_objects,
             }

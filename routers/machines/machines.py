@@ -7,6 +7,7 @@ import sqlmodel
 import context
 import log
 import main_shared
+import services.users
 import services.vps
 import services.vps.containers
 import services.vps.nats
@@ -31,9 +32,15 @@ def machine_containers_list(
     machine_name: str,
     cloud: str,
     query: str="",
+    user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
     logger.info(f"{context.rid_get()} machine '{machine_name}' containers")
+
+    if user_id == 0:
+        return fastapi.responses.RedirectResponse("/users/login")
+
+    user = services.users.get_by_id(db_session=db_session, id=user_id)
 
     try:
         list_result = services.vps.list(cloud=cloud, query=machine_name)
@@ -68,6 +75,7 @@ def machine_containers_list(
                 "query": query,
                 "query_code": query_code,
                 "query_result": query_result,
+                "user": user,
             }
         )
     except Exception as e:
@@ -83,9 +91,15 @@ def machine_nats_list(
     machine_name: str,
     cloud: str,
     query: str="",
+    user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
     logger.info(f"{context.rid_get()} machine '{machine_name}' nats")
+
+    if user_id == 0:
+        return fastapi.responses.RedirectResponse("/users/login")
+
+    user = services.users.get_by_id(db_session=db_session, id=user_id)
 
     try:
         list_result = services.vps.list(cloud=cloud, query=machine_name)
@@ -110,6 +124,7 @@ def machine_nats_list(
                 "app_name": f"Nats : {machine.name}",
                 "app_version": app_version,
                 "machine": machine,
+                "user": user,
             }
         )
     except Exception as e:
@@ -124,11 +139,17 @@ def machines_list(
     request: fastapi.Request,
     cloud: str="",
     query: str = "",
+    user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
     clouds_list = services.vps.clouds()
 
     logger.info(f"{context.rid_get()} machines list clouds {clouds_list} query '{query}'")
+
+    if user_id == 0:
+        return fastapi.responses.RedirectResponse("/users/login")
+
+    user = services.users.get_by_id(db_session=db_session, id=user_id)
 
     machines_list = []
     query_seconds = 0
@@ -168,6 +189,7 @@ def machines_list(
                 "query": query,
                 "query_code": query_code,
                 "query_result": query_result,
+                "user": user,
             }
         )
     except Exception as e:
