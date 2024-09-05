@@ -3,8 +3,6 @@ import glob
 import os
 import re
 
-import sqlmodel
-
 import models
 import services.passw
 

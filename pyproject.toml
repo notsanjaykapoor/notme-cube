@@ -1,3 +1,12 @@
+[project]
+name = "notme-paas"
+version = "0.1.0"
+description = "notme paas,auth"
+readme = "README.md"
+dependencies = [
+    "ruff>=0.6.4",
+]
+
 [tool.ruff]
 # Enable Pyflakes `E` and `F` codes by default.
 select = ["E", "F"]
