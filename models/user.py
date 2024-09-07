@@ -21,7 +21,7 @@ class User(sqlmodel.SQLModel, table=True):
 
     created_at: datetime.datetime = sqlmodel.Field(
         sa_column=sqlalchemy.Column(sqlalchemy.DateTime(timezone=True), nullable=False),
-        default_factory=datetime.datetime.utcnow,
+        default_factory=lambda: datetime.datetime.now(datetime.UTC),
     )
     data: dict = sqlmodel.Field(
         default_factory=dict, sa_column=sqlmodel.Column(sqlmodel.JSON)
@@ -37,5 +37,5 @@ class User(sqlmodel.SQLModel, table=True):
             nullable=False,
             onupdate=sqlalchemy.sql.func.now(),
         ),
-        default_factory=datetime.datetime.utcnow,
+        default_factory=lambda: datetime.datetime.now(datetime.UTC),
     )
