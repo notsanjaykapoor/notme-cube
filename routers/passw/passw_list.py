@@ -30,10 +30,10 @@ def passw_orgs_list(
     user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
-    logger.info(f"{context.rid_get()} passw orgs list user_id {user_id}")
+    logger.info(f"{context.rid_get()} passw orgs list")
 
     if user_id == 0:
-        return fastapi.responses.RedirectResponse("/users/login")
+        return fastapi.responses.RedirectResponse("/login")
 
     try:
         list_result = services.passw.orgs_list()
@@ -78,7 +78,7 @@ def passw_org_list(
     logger.info(f"{context.rid_get()} passw org '{org}' list query '{query}'")
 
     if user_id == 0:
-        return fastapi.responses.RedirectResponse("/users/login")
+        return fastapi.responses.RedirectResponse("/login")
 
     user = services.users.get_by_id(db_session=db_session, id=user_id)
 
@@ -173,7 +173,7 @@ def passw_org_decrypt(
     logger.info(f"{context.rid_get()} passw org '{org}' name '{name}' decrypt")
 
     if user_id == 0:
-        return fastapi.responses.RedirectResponse("/users/login")
+        return fastapi.responses.RedirectResponse("/login")
 
     try:
         passw = services.passw.get_by_name(org=org, name=name)

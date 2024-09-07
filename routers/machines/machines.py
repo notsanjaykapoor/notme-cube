@@ -38,7 +38,7 @@ def machine_containers_list(
     logger.info(f"{context.rid_get()} machine '{machine_name}' containers")
 
     if user_id == 0:
-        return fastapi.responses.RedirectResponse("/users/login")
+        return fastapi.responses.RedirectResponse("/login")
 
     user = services.users.get_by_id(db_session=db_session, id=user_id)
 
@@ -97,7 +97,7 @@ def machine_nats_list(
     logger.info(f"{context.rid_get()} machine '{machine_name}' nats")
 
     if user_id == 0:
-        return fastapi.responses.RedirectResponse("/users/login")
+        return fastapi.responses.RedirectResponse("/login")
 
     user = services.users.get_by_id(db_session=db_session, id=user_id)
 
@@ -147,7 +147,7 @@ def machines_list(
     logger.info(f"{context.rid_get()} machines list clouds {clouds_list} query '{query}'")
 
     if user_id == 0:
-        return fastapi.responses.RedirectResponse("/users/login")
+        return fastapi.responses.RedirectResponse("/login")
 
     user = services.users.get_by_id(db_session=db_session, id=user_id)
 

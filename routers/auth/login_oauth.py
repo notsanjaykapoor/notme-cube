@@ -39,7 +39,7 @@ def oauth_login_denied(request: fastapi.Request):
 
     return templates.TemplateResponse(
         request,
-        "oauth/denied.html",
+        "auth/login_denied.html",
         {
             "app_name": "Console",
             "app_version": app_version,
@@ -113,7 +113,7 @@ def oauth_login_oauth2callback(
         google_response_json = google_response.json()
 
         user_email = google_response_json.get("email")
-        user_name = google_response_json.get("name") or ""
+        _user_name = google_response_json.get("name") or ""
 
         # get user
         user = services.users.get_by_email(db_session=db_session, email=user_email)

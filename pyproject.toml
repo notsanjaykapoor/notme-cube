@@ -1,10 +1,29 @@
 [project]
 name = "notme-paas"
 version = "0.1.0"
-description = "notme paas,auth"
+description = "paas,auth services"
 readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
+    "click>=8.1.7",
+    "coloredlogs>=15.0.1",
+    "fastapi>=0.113.0",
+    "google-auth-oauthlib>=1.2.1",
+    "hcloud>=2.2.1",
+    "itsdangerous>=2.2.0",
+    "jinja2>=3.1.4",
+    "psycopg2>=2.9.9",
+    "pydantic>=2.9.0",
+    "pyjwt>=2.9.0",
+    "python-dotenv>=1.0.1",
+    "python-gnupg>=0.5.2",
+    "python-multipart>=0.0.9",
+    "pytz>=2024.1",
+    "requests>=2.32.3",
     "ruff>=0.6.4",
+    "sqlmodel>=0.0.22",
+    "ulid-py>=1.1.0",
+    "uvicorn>=0.30.6",
 ]
 
 [tool.ruff]

@@ -3,7 +3,7 @@ import os
 import sqlalchemy
 import sqlmodel
 
-import dot_init
+import dot_init # noqa: F401
 
 database_url = os.environ.get("DATABASE_URL")
 

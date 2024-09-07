@@ -41,7 +41,7 @@ def workq_list(
     logger.info(f"{context.rid_get()} workq query '{query}'")
 
     if user_id == 0:
-        return fastapi.responses.RedirectResponse("/users/login")
+        return fastapi.responses.RedirectResponse("/login")
 
     user = services.users.get_by_id(db_session=db_session, id=user_id)
 

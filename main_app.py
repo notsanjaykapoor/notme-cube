@@ -1,7 +1,8 @@
 import os
 
+import dot_init # noqa: F401
+
 import contextlib
-import dot_init
 import fastapi
 import fastapi.middleware.cors
 import fastapi.staticfiles
@@ -13,11 +14,13 @@ import ulid
 import context
 import log
 import main_shared
-import routers
-import routers.machines
-import routers.passw
-import routers.users
-import routers.workq
+import routers.auth.login
+import routers.auth.login_oauth
+import routers.auth.logout
+import routers.machines.machines
+import routers.passw.passw_list
+import routers.passw.passw_manage
+import routers.workq.workq
 import services.database
 import services.users
 
@@ -39,12 +42,12 @@ app = fastapi.FastAPI(lifespan=lifespan)
 
 app_version = os.environ["APP_VERSION"]
 
+app.include_router(routers.auth.login.app)
+app.include_router(routers.auth.login_oauth.app)
+app.include_router(routers.auth.logout.app)
 app.include_router(routers.machines.machines.app)
 app.include_router(routers.passw.passw_list.app)
 app.include_router(routers.passw.passw_manage.app)
-app.include_router(routers.users.login.app)
-app.include_router(routers.users.login_oauth.app)
-app.include_router(routers.users.logout.app)
 app.include_router(routers.workq.workq.app)
 
 # mount traditional static directory
@@ -95,7 +98,7 @@ def home(
     logger.info(f"{context.rid_get()} home")
 
     if user_id == 0:
-        return fastapi.responses.RedirectResponse("/users/login")
+        return fastapi.responses.RedirectResponse("/login")
 
     user = services.users.get_by_id(db_session=db_session, id=user_id)
 

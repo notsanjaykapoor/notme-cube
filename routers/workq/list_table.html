@@ -43,7 +43,7 @@
             <td class="p-4 pr-6 font-normal">{{ workq.msg }}</td>
             <td class="p-4 pr-6 font-bold">
                 {% if workq.state == "error" %}
-                    <span class="cursor-help text-red-800" title="error message todo">
+                    <span class="cursor-help text-red-600" title="todo - error message">
                         {{workq.state}}
                     </span>
                 {% elif workq.state == "completed" %}
@@ -51,7 +51,7 @@
                         {{workq.state}}
                     </span>
                 {% else %}
-                    <span>
+                    <span class="text-amber-500">
                         {{workq.state}}
                     </span>
                 {% endif %}

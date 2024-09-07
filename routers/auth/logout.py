@@ -14,7 +14,7 @@ app = fastapi.APIRouter(
 )
 
 
-@app.get("/users/logout")
+@app.get("/logout")
 def logout():
     """ """
     logger.info(f"{context.rid_get()} logout")

@@ -31,8 +31,8 @@ class UserPassStruct(pydantic.BaseModel):
     password: str = ""
 
 
-@app.get("/users/login")
-@app.post("/users/login")
+@app.get("/login")
+@app.post("/login")
 def users_login(
     request: fastapi.Request,
     user_struct: UserPassStruct = None,
@@ -60,7 +60,7 @@ def users_login(
             logger.info(f"{context.rid_get()} users login '{user_email}' email invalid")
             return templates.TemplateResponse(
                 request,
-                "users/login_error.html",
+                "auth/login_error.html",
                 {
                     "app_version": app_version,
                     "email": user_email,
@@ -69,7 +69,7 @@ def users_login(
             )
 
         if user.idp == models.user.IDP_GOOGLE:
-            response = templates.TemplateResponse(request, "/users/login_ok.html")
+            response = templates.TemplateResponse(request, "/auth/login_ok.html")
             response.headers["HX-Redirect"] = "/login/oauth"
             return response
 
@@ -80,7 +80,7 @@ def users_login(
             logger.info(f"{context.rid_get()} users login '{user_email}' credentials invalid")
             return templates.TemplateResponse(
                 request,
-                "users/login_error.html",
+                "auth/login_error.html",
                 {
                     "app_version": app_version,
                     "email": user_email,
@@ -98,7 +98,7 @@ def users_login(
 
         logger.info(f"{context.rid_get()} users login '{user_email}' ok")
 
-        response = templates.TemplateResponse(request, "/users/login_ok.html")
+        response = templates.TemplateResponse(request, "/auth/login_ok.html")
         response.set_cookie(key="session_id", value=jwt_token)
         response.headers["HX-Redirect"] = "/"
 
@@ -106,7 +106,7 @@ def users_login(
 
     return templates.TemplateResponse(
         request,
-        "users/login.html",
+        "auth/login.html",
         {
             "app_name": "Login",
             "app_version": app_version,
