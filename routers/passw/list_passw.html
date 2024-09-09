@@ -7,7 +7,7 @@
 
     <td class="p-4 pr-6 font-bold">{{ org }}</td>
     <td class="p-4 pr-6 pl-0 font-bold">{{ passw.name }}</td>
-    <td class="p-4 pr-6 font-normal text-gray-400" data-secret="{{ data_secret }}" data-epoch=0>
+    <td class="p-4 pr-6 font-normal text-gray-400 min-w-[12rem] max-w-[15rem]" data-secret="{{ data_secret }}" data-epoch=0>
         {% if passw.passw %}
             <span hx-get="/passw/orgs/{{org}}/{{passw.name}}/blur" hx-target="closest tr" hx-swap="outerHTML" hx-trigger="encrypt">
                 {{ passw.passw }}
@@ -27,7 +27,7 @@
             </div>
         {% endif %}
     </td>
-    <td class="p-4 pr-0 font-normal user text-gray-400">
+    <td class="p-4 pr-0 font-normal user text-gray-400 min-w-[12rem] max-w-[15rem]">
         {% if passw.user %}
             {{ passw.user }}
         {% endif %}

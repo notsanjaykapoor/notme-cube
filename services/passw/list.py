@@ -40,7 +40,7 @@ def list(org: str, query: str, offset: int, limit: int) -> Struct:
         if org:
             file_name = file_name.replace(f"{org}/", "", 1) # strip org from file_name, notme/goog become goog
 
-        if not query or query in file_name:
+        if not query or query.lower() in file_name.lower():
             file_uri = f"file://{source_host}/{file}"
 
             passw = models.Passw(

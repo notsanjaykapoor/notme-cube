@@ -38,8 +38,6 @@ def create(email: str, idp: str, acl: str) -> int:
 
         _print_status("create")
 
-        # acl_struct = services.users.acl_parse(acl=acl)
-
         # create user
 
         user = models.User(
@@ -51,17 +49,6 @@ def create(email: str, idp: str, acl: str) -> int:
 
         db_session.add(user)
         db_session.commit()
-
-        # add user acl
-
-        # user_acl = models.UserAcl(
-        #     roles=acl_struct.roles,
-        #     resource=acl_struct.resource,
-        #     user_id=user.id,
-        # )
-
-        # db_session.add(user_acl)
-        # db_session.commit()
 
         _print_ok(f"user '{email}' created")
 
