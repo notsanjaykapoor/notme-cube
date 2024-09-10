@@ -1,28 +1,21 @@
-<div class="col-start-2 col-span-10 mt-0 mx-0">
+<div class="flex w-11/12 justify-between mt-0 mx-10">
     {% if query_code == 0 %}
-        <p class="text-xs font-bold text-black-700 py-2">
+        <p class="text-xs font-bold text-black-700">
             {{query_result}}
-
-            <span class="float-right text-orange-600">
-                workers: {{ workers_count }}
-                &nbsp;
-                backlog: {{ backlog_count }}
-            </span>
         </p>
     {% else %}
-        <p class="text-xs font-bold text-red-700 py-2">
+        <p class="text-xs font-bold text-red-700">
             {{query_result}}
-
-            <span class="float-right text-orange-600">
-                workers: {{ workers_count }}
-                &nbsp;
-                backlog: {{ backlog_count }}
-            </span>
         </p>
     {% endif %}
+    <p class="text-xs font-bold text-orange-600">
+        workers: {{ workers_count }}
+        &nbsp;
+        backlog: {{ backlog_count }}
+    </p>
 </div>
 
-<table class="col-start-2 col-span-10 mt-5">
+<table class="mt-10 ml-5 w-11/12">
     <thead class="font-normal text-left text-xs leading-6 text-center text-zinc-800">
         <tr>
             <th class="p-4 pr-6 pl-0">name</th>
@@ -37,10 +30,10 @@
     </thead>
     <tbody>
         {% for workq in workq_objects %}
-        <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
-            <td class="p-4 pr-6 pl-0 font-normal">{{ workq.name }}</td>
-            <td class="p-4 pr-6 font-normal">{{ workq.partition }}</td>
-            <td class="p-4 pr-6 font-normal">{{ workq.msg }}</td>
+        <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 font-normal text-center text-xs">
+            <td class="p-4 pr-6 pl-0">{{ workq.name }}</td>
+            <td class="p-4 pr-6">{{ workq.partition }}</td>
+            <td class="p-4 pr-6">{{ workq.msg }}</td>
             <td class="p-4 pr-6 font-bold">
                 {% if workq.state == "error" %}
                     <span class="cursor-help text-red-600" title="todo - error message">
@@ -56,10 +49,10 @@
                     </span>
                 {% endif %}
             </td>
-            <td class="p-4 pr-6 font-normal">{{ workq.worker }}</td>
-            <td class="p-4 pr-6 font-normal">{{ workq.work_time }}</td>
-            <td class="p-4 pr-6 font-normal">{{ workq.work_timestamp(tz="US/Central") }}</td>
-            <td class="p-4 pr-0 font-normal">{{ workq.id }}</td>
+            <td class="p-4 pr-6">{{ workq.worker }}</td>
+            <td class="p-4 pr-6">{{ workq.work_time }}</td>
+            <td class="p-4 pr-6">{{ workq.work_timestamp(tz="US/Central") }}</td>
+            <td class="p-4 pr-0">{{ workq.id }}</td>
         </tr>
         {% endfor %}
     </tbody>

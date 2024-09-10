@@ -11,20 +11,35 @@
         <script src="https://unpkg.com/htmx.org@1.9.10"></script>
         <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
         <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+
+        <script>
+            tailwind.config = {
+                theme: {
+                    screens: {
+                        'xs': '475px',
+                        'sm': '640px',
+                        'md': '768px',
+                        'lg': '1024px',
+                        'xl': '1280px',
+                        '2xl': '1536px',
+                    },
+                },
+            }
+        </script>
     </head>
     <body class="font-mono">
         <header class="flex flex-wrap justify-start z-50 w-full text-sm pb-4 bg-blue-700">
-            <nav class="max-w-[85rem] w-full mx-auto px-4 flex items-center justify-between" aria-label="Global">
-                <div class="flex flex-row items-center gap-5 mt-5 mt-0 sm:ps-5">
+            <nav class="max-w-[85rem] w-full mx-auto px-4 flex justify-between" aria-label="Global">
+                <div class="flex flex-row gap-5 mt-5 mt-0 sm:ps-5 sm:text-sm xs:text-xs">
                     {% if user %}
                         <a class="font-medium text-white hover:text-gray-400" href="/machines">Machines</a>
                         <a class="font-medium text-white hover:text-gray-400" href="/passw">Pass</a>
                         <a class="font-medium text-white hover:text-gray-400" href="/workq">WorkQ</a>
                     {% endif %}
                 </div>
-                <div class="flex flex-row items-center gap-5 mt-5 mt-0 sm:ps-5 mx-5">
+                <div class="flex flex-row gap-5 mt-5 mt-0 sm:ps-5 mx-5 sm:text-sm xs:text-xs">
                     {% if user %}
-                        <span class="font-medium text-white mx-5">
+                        <span class="font-medium text-white opacity-50">
                             {{ user.email }}
                         </span>
                         <a class="font-medium text-white hover:text-gray-400 mx-5" href="/logout">Logout</a>

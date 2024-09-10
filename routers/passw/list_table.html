@@ -1,20 +1,19 @@
-<div class="col-start-2 col-span-10 mt-0 mx-0">
+<div class="mt-0 mx-10">
     {% if query_code == 0 %}
-        <p class="text-xs font-bold text-black-700 py-2">
+        <p class="text-xs font-bold text-black-700">
             {{query_result}}
         </p>
     {% else %}
-        <p class="text-xs font-bold text-red-700 py-2">
+        <p class="text-xs font-bold text-red-700">
             {{query_result}}
         </p>
     {% endif %}
 </div>
 
-<table class="col-start-2 col-span-10 mt-5 table-fixed">
+<table class="mt-5 ml-5 w-11/12">
     <thead class="font-normal text-left text-xs leading-6 text-center text-zinc-800">
-        <tr>
-            <th class="p-4 pr-6 pl-0">org</th>
-            <th class="p-4 pr-6">name</th>
+        <tr class="">
+            <th class="p-4 pr-6 pl-0">name</th>
             <th class="p-4 pr-6">pass</th>
             <th class="p-4 pr-6">user</th>
         </tr>
