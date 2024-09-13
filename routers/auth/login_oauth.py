@@ -13,6 +13,7 @@ import context
 import log
 import main_shared
 import services.users
+import services.utils
 
 logger = log.init("app")
 
@@ -56,8 +57,8 @@ def oauth_login():
     logger.info(f"{context.rid_get()} oauth init")
 
     try:
-        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-            os.environ.get("OAUTH_SECRETS_PATH"),
+        flow = google_auth_oauthlib.flow.Flow.from_client_config(
+            services.utils.base64_to_json(s=os.environ.get("OAUTH_SECRETS_BASE64")),
             scopes=oauth_scopes,
         )
 
@@ -90,8 +91,8 @@ def oauth_login_oauth2callback(
     try:
         # exchange authorization code for access token
 
-        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-            os.environ.get("OAUTH_SECRETS_PATH"),
+        flow = google_auth_oauthlib.flow.Flow.from_client_config(
+            services.utils.base64_to_json(s=os.environ.get("OAUTH_SECRETS_BASE64")),
             scopes=oauth_scopes,
             state=state,
         )
@@ -136,12 +137,12 @@ def oauth_login_oauth2callback(
             # client_id=credentials.client_id,
             # client_secret=credentials.client_secret,
         )
-
-        logger.info(f"{context.rid_get()} oauth callback ok")
     except Exception as e:
         jwt_token = ""
         logger.error(f"{context.rid_get()} oauth callback exception '{e}' - {traceback.format_exc()}")
         return fastapi.responses.RedirectResponse("/login/denied")
+
+    logger.info(f"{context.rid_get()} oauth callback ok")
 
     response = fastapi.responses.RedirectResponse("/")
     response.set_cookie(key="session_id", value=jwt_token)
