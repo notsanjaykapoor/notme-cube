@@ -20,8 +20,7 @@ def cli():
 
 @click.command()
 @click.option("--env", default="dev", required=False, help="app environment, e.g. dev, tst")
-@click.pass_context
-def create(ctx, env: str) -> list[str]:
+def create(env: str) -> list[str]:
     """
     create database
     """
@@ -49,8 +48,7 @@ def create(ctx, env: str) -> list[str]:
 
 @click.command()
 @click.option("--name", required=True, help="migration name")
-@click.pass_context
-def migrate_create(ctx, name: str) -> dict:
+def migrate_create(name: str) -> dict:
     """
     create migration using alemic autogenerate; migration file is added to migrations/version directory.
     """
@@ -68,20 +66,18 @@ def migrate_create(ctx, name: str) -> dict:
 
 
 @click.command()
-@click.pass_context
-def migrate_init(ctx) -> list[str]:
+def migrate_init() -> list[str]:
     """
     run migrations based on models directory; used in test environments or anywhere where a complete 0 to 1 migration is required
     """
-    print("migrate", end=" ... ")
+    print("db migrate", end=" ... ")
     services.database.session.migrate()
     _print_ok("ok")
 
 
 @click.command()
 @click.option("--revision", required=False, default="head", help="migration revision")
-@click.pass_context
-def migrate_up(ctx, revision: str) -> dict:
+def migrate_up(revision: str) -> dict:
     """
     run migration(s) in migrations/version directory, use 'revision' if specified, otherwise run all pending migrations
     """
