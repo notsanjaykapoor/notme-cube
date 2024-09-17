@@ -2,6 +2,7 @@ import os
 
 import fastapi
 import fastapi.responses
+import fastapi.templating
 import sqlmodel
 
 import context
@@ -15,15 +16,13 @@ import services.vps.nats
 logger = log.init("app")
 
 # initialize templates dir
-templates = fastapi.templating.Jinja2Templates(directory="routers")
+templates = fastapi.templating.Jinja2Templates(directory="routers", context_processors=[main_shared.jinja_context])
 
 app = fastapi.APIRouter(
     tags=["app"],
     dependencies=[fastapi.Depends(main_shared.get_db)],
     responses={404: {"description": "Not found"}},
 )
-
-app_version = os.environ["APP_VERSION"]
 
 
 @app.get("/machines/{machine_name}/containers")
@@ -35,7 +34,7 @@ def machine_containers_list(
     user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
-    logger.info(f"{context.rid_get()} machine '{machine_name}' containers")
+    logger.info(f"{context.rid_get()} cloud '{cloud}' machine '{machine_name}' containers")
 
     if user_id == 0:
         return fastapi.responses.RedirectResponse("/login")
@@ -69,7 +68,6 @@ def machine_containers_list(
             template,
             {
                 "app_name": f"Containers : {machine.name}",
-                "app_version": app_version,
                 "containers_list": containers_list,
                 "machine": machine,
                 "query": query,
@@ -122,7 +120,6 @@ def machine_nats_list(
             template,
             {
                 "app_name": f"Nats : {machine.name}",
-                "app_version": app_version,
                 "machine": machine,
                 "user": user,
             }
@@ -183,7 +180,6 @@ def machines_list(
             template,
             {
                 "app_name": "Machines",
-                "app_version": app_version,
                 "machines_list": machines_list,
                 "prompt_text": "search",
                 "query": query,

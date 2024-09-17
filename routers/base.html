@@ -32,9 +32,11 @@
             <nav class="max-w-[85rem] w-full mx-auto px-4 flex justify-between" aria-label="Global">
                 <div class="flex flex-row gap-5 mt-5 mt-0 sm:ps-5 sm:text-sm xs:text-xs">
                     {% if user %}
-                        <a class="font-medium text-white hover:text-gray-400" href="/machines">Machines</a>
                         <a class="font-medium text-white hover:text-gray-400" href="/passw">Pass</a>
-                        <a class="font-medium text-white hover:text-gray-400" href="/workq">WorkQ</a>
+                        {% if vps_key %}
+                            <a class="font-medium text-white hover:text-gray-400" href="/machines">Machines</a>
+                            <a class="font-medium text-white hover:text-gray-400" href="/workq">WorkQ</a>
+                        {% endif %}
                     {% endif %}
                 </div>
                 <div class="flex flex-row gap-5 mt-5 mt-0 sm:ps-5 mx-5 sm:text-sm xs:text-xs">

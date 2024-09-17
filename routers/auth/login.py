@@ -3,6 +3,7 @@ import os
 
 import fastapi
 import fastapi.responses
+import fastapi.templating
 import pydantic
 import sqlmodel
 
@@ -15,16 +16,13 @@ import services.users
 logger = log.init("app")
 
 # initialize templates dir
-templates = fastapi.templating.Jinja2Templates(directory="routers")
+templates = fastapi.templating.Jinja2Templates(directory="routers", context_processors=[main_shared.jinja_context])
 
 app = fastapi.APIRouter(
     tags=["app.oauth"],
     dependencies=[fastapi.Depends(main_shared.get_db)],
     responses={404: {"description": "Not found"}},
 )
-
-app_version = os.environ["APP_VERSION"]
-
 
 class UserPassStruct(pydantic.BaseModel):
     email: str = ""
@@ -62,7 +60,6 @@ def users_login(
                 request,
                 "auth/login_error.html",
                 {
-                    "app_version": app_version,
                     "email": user_email,
                     "login_message": "invalid email",
                 },
@@ -82,7 +79,6 @@ def users_login(
                 request,
                 "auth/login_error.html",
                 {
-                    "app_version": app_version,
                     "email": user_email,
                     "login_error": "invalid credentials",
                 },
@@ -109,7 +105,6 @@ def users_login(
         "auth/login.html",
         {
             "app_name": "Login",
-            "app_version": app_version,
             "email": user_email,
             "prompt_text": "email",
         },

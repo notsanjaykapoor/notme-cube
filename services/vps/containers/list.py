@@ -25,7 +25,7 @@ def list(ip: str, user: str, query: str) -> Struct:
 
     t1 = time.time()
 
-    cmd = "sudo docker ps"
+    cmd = "docker ps"
     struct.code, result = services.ssh.exec(host=ip, user=user, cmd=cmd)
     struct.seconds = round(time.time() - t1, 2)
 

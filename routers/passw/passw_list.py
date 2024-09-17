@@ -2,6 +2,7 @@ import os
 
 import fastapi
 import fastapi.responses
+import fastapi.templating
 import sqlmodel
 
 import context
@@ -13,15 +14,13 @@ import services.users
 logger = log.init("app")
 
 # initialize templates dir
-templates = fastapi.templating.Jinja2Templates(directory="routers")
+templates = fastapi.templating.Jinja2Templates(directory="routers", context_processors=[main_shared.jinja_context])
 
 app = fastapi.APIRouter(
     tags=["app"],
     dependencies=[fastapi.Depends(main_shared.get_db)],
     responses={404: {"description": "Not found"}},
 )
-
-app_version = os.environ["APP_VERSION"]
 
 
 @app.get("/passw", response_class=fastapi.responses.HTMLResponse)
@@ -53,7 +52,6 @@ def passw_orgs_list(
             "passw/orgs/list.html",
             {
                 "app_name": "Pass",
-                "app_version": app_version,
                 "orgs_list": orgs_list,
                 "user": user,
             }
@@ -109,7 +107,6 @@ def passw_org_list(
             template,
             {
                 "app_name": "Pass",
-                "app_version": app_version,
                 "org": org,
                 "passw_list": passw_list,
                 "prompt_text": "search",
@@ -149,7 +146,6 @@ def passw_org_blur(
             "passw/list_passw.html",
             {
                 "app_name": "Pass",
-                "app_version": app_version,
                 "org": org,
                 "passw": passw
             }
@@ -190,7 +186,6 @@ def passw_org_decrypt(
             "passw/list_passw.html",
             {
                 "app_name": "Pass",
-                "app_version": app_version,
                 "org": org,
                 "passw": passw
             }

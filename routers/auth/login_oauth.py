@@ -5,6 +5,7 @@ import traceback
 
 import fastapi
 import fastapi.responses
+import fastapi.templating
 import google_auth_oauthlib.flow
 import requests
 import sqlmodel
@@ -18,15 +19,13 @@ import services.utils
 logger = log.init("app")
 
 # initialize templates dir
-templates = fastapi.templating.Jinja2Templates(directory="routers")
+templates = fastapi.templating.Jinja2Templates(directory="routers", context_processors=[main_shared.jinja_context])
 
 app = fastapi.APIRouter(
     tags=["app.oauth"],
     dependencies=[fastapi.Depends(main_shared.get_db)],
     responses={404: {"description": "Not found"}},
 )
-
-app_version = os.environ["APP_VERSION"]
 
 oauth_scopes = [
     "https://www.googleapis.com/auth/userinfo.email",
@@ -43,7 +42,6 @@ def oauth_login_denied(request: fastapi.Request):
         "auth/login_denied.html",
         {
             "app_name": "Console",
-            "app_version": app_version,
             "login_message": "Authorization denied",
         },
     )

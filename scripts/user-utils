@@ -22,8 +22,7 @@ def cli():
 @click.command()
 @click.option("--email", required=True, help="user email")
 @click.option("--idp", required=True, help="idp name")
-@click.option("--acl", required=False, default="", help="user acl") # todo
-def create(email: str, idp: str, acl: str) -> int:
+def create(email: str, idp: str) -> int:
     """
     create user
     """

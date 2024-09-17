@@ -2,6 +2,7 @@ import os
 
 import fastapi
 import fastapi.responses
+import fastapi.templating
 import sqlmodel
 
 import context
@@ -16,15 +17,13 @@ import services.workers
 logger = log.init("app")
 
 # initialize templates dir
-templates = fastapi.templating.Jinja2Templates(directory="routers")
+templates = fastapi.templating.Jinja2Templates(directory="routers", context_processors=[main_shared.jinja_context])
 
 app = fastapi.APIRouter(
     tags=["app"],
     dependencies=[fastapi.Depends(main_shared.get_db)],
     responses={404: {"description": "Not found"}},
 )
-
-app_version = os.environ["APP_VERSION"]
 
 
 @app.get("/workq", response_class=fastapi.responses.HTMLResponse)
@@ -74,7 +73,6 @@ def workq_list(
             template,
             {
                 "app_name": "WorkQ",
-                "app_version": app_version,
                 "backlog_count": backlog_count,
                 "prompt_text": "search",
                 "query": query,

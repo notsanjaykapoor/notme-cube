@@ -30,6 +30,10 @@ logger = log.init("app")
 async def lifespan(app: fastapi.FastAPI):
     logger.info("api.startup init")
 
+    if services.database.session.check() != 0:
+        # create database
+        services.database.session.create()
+
     # migrate database
     services.database.session.migrate()
 
@@ -39,8 +43,6 @@ async def lifespan(app: fastapi.FastAPI):
 
 # create app object
 app = fastapi.FastAPI(lifespan=lifespan)
-
-app_version = os.environ["APP_VERSION"]
 
 app.include_router(routers.auth.login.app)
 app.include_router(routers.auth.login_oauth.app)
@@ -86,7 +88,7 @@ async def notme_middleware(request: fastapi.Request, call_next):
 
 
 # initialize templates dir
-templates = fastapi.templating.Jinja2Templates(directory="routers")
+templates = fastapi.templating.Jinja2Templates(directory="routers", context_processors=[main_shared.jinja_context])
 
 
 @app.get("/")
@@ -107,7 +109,6 @@ def home(
         "home.html",
         {
             "app_name": "Home",
-            "app_version": app_version,
             "user": user,
         }
     )
