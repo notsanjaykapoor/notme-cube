@@ -35,3 +35,12 @@ def gpg_get(gpg_dir: str) -> gnupg.GPG:
     _, source_dir, _ = file_uri_parse(source_uri=gpg_dir)
 
     return gnupg.GPG(gnupghome=source_dir)
+
+
+def gpg_key(gpg_dir: str) -> tuple[gnupg.GPG, dict]:
+    """
+    get gpg key
+    """
+    gpg = gpg_get(gpg_dir=gpg_dir)
+
+    return (gpg, gpg.list_keys()[0])
