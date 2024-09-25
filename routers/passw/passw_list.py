@@ -49,7 +49,7 @@ def passw_orgs_list(
     try:
         response = templates.TemplateResponse(
             request,
-            "passw/orgs/list.html",
+            "passw/orgs_list.html",
             {
                 "app_name": "Pass",
                 "orgs_list": orgs_list,

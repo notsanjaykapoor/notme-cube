@@ -40,7 +40,7 @@ def passw_org_add(
     try:
         response = templates.TemplateResponse(
             request,
-            "passw/orgs/new.html",
+            "passw/new.html",
             {
                 "app_name": "Pass",
                 "org": org,
@@ -90,7 +90,7 @@ def passw_org_generate(
 
     response = templates.TemplateResponse(
         request,
-        "passw/orgs/new_password.html",
+        "passw/new_password.html",
         {
             "app_name": "Pass",
             "password": password,

@@ -11,8 +11,8 @@
     </div>
 </div>
 
-<div class="container grid grid-cols-12 mt-10">
-    <div class="col-start-2 col-span-10 px-0 mt-5 ml-2 text-xs text-zinc-400">
+<div class="flex justify-between mt-10">
+    <div class="sm:mx-20 xs:mx-5 mt-5 text-xs text-zinc-400">
         <a href="/machines" class="text-blue-700 font-bold">
           machines
         </a>
@@ -23,7 +23,7 @@
     </div>
 </div>
 
-<div class="container grid grid-cols-12 mt-10" id="containers-table">
+<div class="flex flex-col mt-10" id="containers-table">
     {% include "machines/containers/list_table.html" %}
 </div>
 

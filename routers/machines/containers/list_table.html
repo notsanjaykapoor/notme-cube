@@ -1,4 +1,4 @@
-<div class="col-start-2 col-span-10 mt-0 ml-2">
+<div class="mt-0 sm:mx-20 xs:mx-5">
     {% if query_code == 0 %}
         <p class="text-xs font-bold text-black-700 py-2">{{query_result}}</p>
     {% else %}
@@ -6,12 +6,12 @@
     {% endif %}
 </div>
   
-<table class="col-start-2 col-span-10 mt-5" id="machines-table">
+<table class="mt-5 sm:mx-20 xs:mx-5 xs:w-full sm:w-10/12" id="containers-table">
     <thead class="font-normal text-center text-xs leading-6 text-zinc-800">
         <tr>
             <th class="p-4">name</th>
             <th class="p-4">image</th>
-            <th class="p-4 pr-0"></th>
+            <th class="p-4">ssh</th>
         </tr>
     </thead>
     <tbody>
@@ -21,7 +21,7 @@
                 {{ container.name }}
             </td>
             <td class="p-4 font-normal">{{ container.image }}</td>
-            <td class="p-4 pr-0 font-normal opacity-30">ssh {{ machine.user }}@{{ machine.ip }}</td>
+            <td class="p-4 font-normal opacity-30">ssh {{ machine.user }}@{{ machine.ip }}</td>
         </tr>
         {% endfor %}
     </tbody>

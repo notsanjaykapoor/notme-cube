@@ -11,8 +11,8 @@
     </div>
 </div>
 
-<div class="container grid grid-cols-12 mt-10">
-    <div class="col-start-2 col-span-10 px-0 mt-5 ml-2 text-xs text-zinc-400">
+<div class="flex flex-col mt-10">
+    <div class="sm:mx-20 xs:mx-5 text-xs text-zinc-400">
         <a href="/passw" class="text-blue-700 font-bold">
             passw
         </a>
@@ -20,27 +20,26 @@
         <a href="/passw/orgs/{{ org }}" class="text-blue-700 font-bold">
             {{ org }}
         </a>
-        
         &nbsp;/&nbsp;
         new
     </div>
 </div>
 
-<form id="passw-form" hx-post="/passw/orgs/{{org}}/create" hx-ext="json-enc" hx-target="#passw-response">
-    <div class="flex mx-auto mt-20">
+<form id="passw-form" hx-post="/passw/orgs/{{org}}/create" hx-ext="json-enc" hx-target="#passw-response" class="mt-20">
+    <div class="flex flex-col">
         <div class="font-normal mx-auto text-sm">
             <input type="text" name="name" value="" placeholder="name - required" required autocomplete="off" class="peer px-0 py-2.5 mx-0 min-w-80 h-full w-full border-b bg-transparent font-sans text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border-blue-gray-200 focus:border-pink-600 focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50">
         </div>
     </div>
-    <div class="flex mx-auto mt-10" hx-get="/passw/orgs/{{org}}/generate" id="passw-input" hx-target="#passw-input" hx-trigger="passw-generate">
-        {% include "passw/orgs/new_password.html" %}
+    <div class="flex flex-col mt-10" hx-get="/passw/orgs/{{org}}/generate" id="passw-input" hx-target="#passw-input" hx-trigger="passw-generate">
+        {% include "passw/new_password.html" %}
     </div>
-    <div class="flex mx-auto mt-10">
+    <div class="flex flex-col mt-10">
         <div class="font-normal mx-auto text-sm">
             <input type="text" name="user" value="{{password}}" placeholder="username, email - optional" autocomplete="off" class="peer px-0 py-2.5 mx-0 h-full min-w-80 w-full border-b bg-transparent font-sans text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border-blue-gray-200 focus:border-pink-600 focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50">
         </div>
     </div>
-    <div class="flex justify-between mx-auto mt-20">
+    <div class="flex flex-col justify-between mx-auto mt-20">
         <div class="mx-auto font-normal text-xs">
             <button type="submit" hx-on:click="passw_generate(event)" class="text-white bg-orange-600 hover:bg-orange-800 focus:ring-4 focus:ring-orange-300 font-medium rounded-lg mr-20 text-xs px-5 py-2.5 me-2 mb-2 hover:bg-orange-700 focus:outline-none">
                 Generate
@@ -60,8 +59,6 @@
     function passw_generate(e) {
         // trigger event to generate random password
         e.preventDefault()
-
-        console.log("passw generate todo")
 
         const event = new Event("passw-generate");
         const elem = document.getElementById("passw-input")

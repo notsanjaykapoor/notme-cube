@@ -33,9 +33,9 @@ def build(dockerfile: str, sha: str, no_push: bool, env: str):
 
     _print_ok("ok")
 
-    time_mins = round((time.time() - time_start_unix) / 60, 1)
+    time_mins = round((time.time() - time_start_unix), 1)
 
-    _print_ok(f"build completed in {time_mins} mins")
+    _print_ok(f"build completed in {time_mins} secs")
 
 
 @click.command()
@@ -53,7 +53,7 @@ def deploy(host: str, user: str):
 
     env_file = os.environ.get("VPS_APP_ENV_FILE")
 
-    print(f"host '{host}' file scp '{env_file}'", end=" ... ", flush=True)
+    print(f"host '{host}' file cp '{env_file}'", end=" ... ", flush=True)
 
     _vps_file_copy(host=host, user=user, file=env_file)
 
@@ -171,10 +171,16 @@ def _docker_run_cmd() -> str:
     repo = os.environ.get("VPS_DOCKER_REPO")
     image = f"{repo}:latest"
     app_entrypoint = os.environ.get("VPS_APP_ENTRYPOINT")
+    app_mount = os.environ.get("VPS_APP_MOUNT")
     app_name = os.environ.get("VPS_APP_NAME")
     env_file = os.environ.get("VPS_APP_ENV_FILE")
 
-    return f"docker run -d --name {app_name} --network {network} --env-file {env_file} -p {port}:{port} {image} {app_entrypoint}"
+    docker_cmd = f"docker run -d --name {app_name} --network {network} --env-file {env_file} -p {port}:{port}"
+
+    if app_mount:
+        docker_cmd = f"{docker_cmd} -v {app_mount}"
+
+    return f"{docker_cmd} {image} {app_entrypoint}"
 
 
 def _vps_file_copy(host: str, user: str, file: str) -> int:

@@ -18,8 +18,8 @@ dev: docker
 docker:
 	docker compose -f docker/docker-compose.yml up -d --no-recreate nats
 
-install: requirements.txt
-	uv pip install -r requirements.txt
+install: pyproject.toml
+	uv sync
 
 prd:
 	. $(VENV)/bin/activate && ./bin/app-server --port 9003

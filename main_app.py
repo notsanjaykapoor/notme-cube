@@ -112,3 +112,14 @@ def home(
             "user": user,
         }
     )
+
+
+@app.get("/500")
+def error_500(request: fastapi.Request):
+    return templates.TemplateResponse(
+        request,
+        "500.html",
+        {
+            "app_name": "Error",
+        }
+    )

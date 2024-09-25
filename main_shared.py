@@ -24,5 +24,6 @@ def get_user_id():
 def jinja_context(request: fastapi.Request) -> dict[str]:
     return {
         "app_version": os.environ.get("APP_VERSION", ""),
+        "user_id": context.uid_get(),
         "vps_key": os.environ.get("VPS_KEY", ""),
     }
