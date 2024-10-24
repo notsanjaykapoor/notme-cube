@@ -24,17 +24,27 @@ uv sync
 The dev environment uses a env file to define its environment:
 
 ```
-cp env.example .env # define your env vars
+cp env.example .env
 ```
 
-Start the dev server:
+Define your environment in .env, and then start the dev server:
 
 ```
 make dev
 ```
 
+#### Password Manager
+
+The password interface uses the [pass](https://www.passwordstore.org/) tool to store passwords in gpg encrypted files.  The password user interface enables creating new passwords and showing existing passwords:
+
+![Password List Example](https://ik.imagekit.io/notme001/readme/passw_list_example.png "passw list example")
+
+![Password Show Example](https://ik.imagekit.io/notme001/readme/passw_show_example.png "passw show example")
+
 
 #### Build
+
+Build docker image:
 
 ```
 make build

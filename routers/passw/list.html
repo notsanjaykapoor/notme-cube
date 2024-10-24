@@ -41,9 +41,8 @@
 </div>
 
 <script>
-    function random_int(min, max) {
-        return Math.random() * (max - min) + min;
-    }
+    var passw_blur_count = {{ passw_blur_count }}
+    var passw_blur_secs = {{ passw_blur_secs }}
 
     setInterval(function() {
         const node_list = document.querySelectorAll("[data-secret='1']")
@@ -51,13 +50,12 @@
         for (let node of node_list) {
             node.dataset.epoch = parseInt(node.dataset.epoch) + 1
 
-            if (node.dataset.epoch >= 2) {
+            if (node.dataset.epoch >= passw_blur_count) {
                 node.dataset.secret = 0
-                // node.querySelector("span").innerHTML = "*".repeat(random_int(5,15))
                 node.querySelector("span").dispatchEvent(new Event("encrypt"))
             }
         }
-    }, 3000)
+    }, passw_blur_secs * 1000)
 
 </script>
 

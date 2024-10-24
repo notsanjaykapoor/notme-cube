@@ -23,6 +23,9 @@ app = fastapi.APIRouter(
 )
 
 
+PASSW_BLUR_COUNT = 2
+PASSW_BLUR_SECS = 3
+
 @app.get("/passw", response_class=fastapi.responses.HTMLResponse)
 def passw_orgs_list(
     request: fastapi.Request,
@@ -108,6 +111,8 @@ def passw_org_list(
             {
                 "app_name": "Pass",
                 "org": org,
+                "passw_blur_count": PASSW_BLUR_COUNT,
+                "passw_blur_secs": PASSW_BLUR_SECS,
                 "passw_list": passw_list,
                 "prompt_text": "search",
                 "query": query,
