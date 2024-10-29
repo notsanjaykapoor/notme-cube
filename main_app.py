@@ -91,6 +91,16 @@ async def notme_middleware(request: fastapi.Request, call_next):
 templates = fastapi.templating.Jinja2Templates(directory="routers", context_processors=[main_shared.jinja_context])
 
 
+@app.get("/favicon.ico")
+def favicon():
+    file_name = "favicon.ico"
+    file_path = os.path.join(app.root_path, "static", file_name)
+    return fastapi.responses.FileResponse(
+        path=file_path,
+        headers={"Content-Disposition": "attachment; filename=" + file_name},
+    )
+
+
 @app.get("/")
 def home(
     request: fastapi.Request,
