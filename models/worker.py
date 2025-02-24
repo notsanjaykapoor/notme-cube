@@ -5,6 +5,9 @@ import sqlmodel
 
 STATE_BUSY = "busy"
 STATE_IDLE = "idle"
+STATE_TERM = "term"
+
+STATES_ACTIVE = [STATE_BUSY, STATE_IDLE]
 
 
 class Worker(sqlmodel.SQLModel, table=True):

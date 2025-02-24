@@ -50,7 +50,8 @@ def workq_list(
         query_code = 0
         query_result = f"query '{query}' returned {wq_list_result.total} results"
 
-        workers_list_result = services.workers.list(db_session=db_session, query=query, offset=offset, limit=limit)
+        workers_query = "state:active"
+        workers_list_result = services.workers.list(db_session=db_session, query=workers_query, offset=offset, limit=limit)
         workers_count = len(workers_list_result.objects)
 
         backlog_count = services.workq.count_queued(db_session=db_session, queue=models.workq.QUEUE_WORK)

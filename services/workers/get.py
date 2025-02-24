@@ -1,3 +1,5 @@
+import datetime
+
 import sqlmodel
 
 import models
@@ -21,11 +23,11 @@ def get_or_create(db_session: sqlmodel.Session, name: str, state: str) -> models
     worker = get_by_name(db_session=db_session, name=name)
     worker = worker or services.workers.create(db_session=db_session, name=name)
 
-    if worker.state != state:
-        worker.state = state
+    worker.state = state
+    worker.updated_at = datetime.datetime.now(datetime.timezone.utc)
 
-        db_session.add(worker)
-        db_session.commit()
+    db_session.add(worker)
+    db_session.commit()
 
     return worker
 

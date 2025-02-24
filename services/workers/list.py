@@ -47,6 +47,11 @@ def list(db_session: sqlmodel.Session, query: str, offset: int, limit: int) -> S
             # always like query
             value_normal = re.sub(r"~", "", value)
             dataset = dataset.where(model.name.like("%" + value_normal + "%"))
+        elif token["field"] == "state":
+            if value == "active":
+                dataset = dataset.where(model.state.in_(models.worker.STATES_ACTIVE))
+            else:
+                dataset = dataset.where(model.state == value)
 
     struct.objects = db_session.exec(dataset.offset(offset).limit(limit).order_by(model.id.desc())).all()
     struct.count = len(struct.objects)

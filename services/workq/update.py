@@ -5,50 +5,50 @@ import sqlmodel
 import models
 
 
-def state_completed(db_session: sqlmodel.Session, workq: models.WorkQ) -> int:
+def state_completed(db_session: sqlmodel.Session, job: models.WorkQ) -> int:
     """
-    Mark work object as completed
+    Mark job state as completed and set completed_at timestamp.
     """
-    if workq.state == models.workq.STATE_COMPLETED:
+    if job.state == models.workq.STATE_COMPLETED:
         return 409
 
-    workq.state = models.workq.STATE_COMPLETED
-    workq.completed_at = datetime.datetime.now(datetime.timezone.utc)
+    job.state = models.workq.STATE_COMPLETED
+    job.completed_at = datetime.datetime.now(datetime.timezone.utc)
 
-    db_session.add(workq)
+    db_session.add(job)
     db_session.commit()
 
     return 0
 
 
-def state_error(db_session: sqlmodel.Session, workq: models.WorkQ) -> int:
+def state_error(db_session: sqlmodel.Session, job: models.WorkQ) -> int:
     """
-    Mark work object as error
+    Mark job state as error and set completed_at timestamp.
     """
-    if workq.state == models.workq.STATE_ERROR:
+    if job.state == models.workq.STATE_ERROR:
         return 409
 
-    workq.state = models.workq.STATE_ERROR
-    workq.completed_at = datetime.datetime.now(datetime.timezone.utc)
+    job.state = models.workq.STATE_ERROR
+    job.completed_at = datetime.datetime.now(datetime.timezone.utc)
 
-    db_session.add(workq)
+    db_session.add(job)
     db_session.commit()
 
     return 0
 
 
-def state_processing(db_session: sqlmodel.Session, workq: models.WorkQ, worker: str) -> int:
+def state_processing(db_session: sqlmodel.Session, job: models.WorkQ, worker: str) -> int:
     """
-    Mark work object as processing
+    Mark job state as processing and set processing_at timestamp.
     """
-    if workq.state == models.workq.STATE_PROCESSING:
+    if job.state == models.workq.STATE_PROCESSING:
         return 409
 
-    workq.state = models.workq.STATE_PROCESSING
-    workq.processing_at = datetime.datetime.now(datetime.timezone.utc)
-    workq.worker = worker
+    job.state = models.workq.STATE_PROCESSING
+    job.processing_at = datetime.datetime.now(datetime.timezone.utc)
+    job.worker = worker
 
-    db_session.add(workq)
+    db_session.add(job)
     db_session.commit()
 
     return 0

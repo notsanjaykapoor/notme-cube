@@ -11,6 +11,6 @@ handlers = {
 def route(queue: str) -> WorkHandler | None:
     """
     """
-    return handlers.get(queue)
+    return handlers.get(queue)()
 
     

@@ -1,20 +1,27 @@
-<div class="mt-0 sm:mx-20 xs:mx-5">
-    {% if query_code == 0 %}
-        <p class="text-xs font-bold text-black-700 py-2">{{query_result}}</p>
-    {% else %}
-        <p class="text-xs font-bold text-red-700 py-2">{{query_result}}</p>
-    {% endif %}
+<div class="flex justify-between sm:mx-20 xs:mx-5">
+    <div class="flex">
+        {% if query_code == 0 %}
+            <p class="text-xs font-bold text-black-700 py-2">{{query_result}}</p>
+        {% else %}
+            <p class="text-xs font-bold text-red-700 py-2">{{query_result}}</p>
+        {% endif %}
+    </div>
 </div>
   
 <table class="mt-5 sm:mx-20 xs:mx-5 xs:w-full sm:w-10/12" id="machines-table">
     <thead class="font-normal text-center text-xs leading-6 text-zinc-800">
         <tr>
             <th class="p-4">name</th>
-            <th class="p-4">ip</th>
+            <th class="p-4">cluster</th>
             <th class="p-4">cloud</th>
+            <th class="p-4">location</th>
+            <th class="p-4">type</th>
+            <th class="p-4">image</th>
+            <th class="p-4">state</th>
+            <th class="p-4">id</th>
             <th class="p-4">containers</th>
             <th class="p-4">nats</th>
-            <th class="p-4">state</th>
+            <th class="p-4">ssh</th>
             <th class="p-4"></th>
         </tr>
     </thead>
@@ -22,11 +29,16 @@
         {% for machine in machines_list %}
         <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
             <td class="p-4 font-normal">{{ machine.name }}</td>
-            <td class="p-4 font-normal">{{ machine.ip }}</td>
+            <td class="p-4 font-normal">{{ machine.cluster }}</td>
             <td class="p-4 font-normal">{{ machine.cloud }}</td>
+            <td class="p-4 font-normal">{{ machine.location }}</td>
+            <td class="p-4 font-normal">{{ machine.type }}</td>
+            <td class="p-4 font-normal">{{ machine.image }}</td>
+            <td class="p-4 font-normal">{{ machine.state }}</td>
+            <td class="p-4 font-normal">{{ machine.id }}</td>
             <td class="p-4 font-normal">
                 {% if machine.state == "running" %}
-                    <a href="/machines/{{machine.name}}/containers?cloud={{machine.cloud}}" class="flex justify-center items-center">
+                    <a href="/machines/{{machine.name}}/containers?cloud={{machine.cloud}}&cluster={{machine.cluster}}" class="flex justify-center items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-orange-600">
                             <path fill-rule="evenodd" d="M7.84 1.804A1 1 0 0 1 8.82 1h2.36a1 1 0 0 1 .98.804l.331 1.652a6.993 6.993 0 0 1 1.929 1.115l1.598-.54a1 1 0 0 1 1.186.447l1.18 2.044a1 1 0 0 1-.205 1.251l-1.267 1.113a7.047 7.047 0 0 1 0 2.228l1.267 1.113a1 1 0 0 1 .206 1.25l-1.18 2.045a1 1 0 0 1-1.187.447l-1.598-.54a6.993 6.993 0 0 1-1.929 1.115l-.33 1.652a1 1 0 0 1-.98.804H8.82a1 1 0 0 1-.98-.804l-.331-1.652a6.993 6.993 0 0 1-1.929-1.115l-1.598.54a1 1 0 0 1-1.186-.447l-1.18-2.044a1 1 0 0 1 .205-1.251l1.267-1.114a7.05 7.05 0 0 1 0-2.227L1.821 7.773a1 1 0 0 1-.206-1.25l1.18-2.045a1 1 0 0 1 1.187-.447l1.598.54A6.992 6.992 0 0 1 7.51 3.456l.33-1.652ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd" />
                         </svg>
@@ -35,15 +47,23 @@
             </td>
             <td class="p-4 font-normal">
                 {% if machine.nats == 1 %}
-                    <a href="/machines/{{machine.name}}/nats?cloud={{machine.cloud}}" class="flex justify-center items-center">
+                    <a href="/machines/{{machine.name}}/nats?cloud={{machine.cloud}}&cluster={{machine.cluster}}" class="flex justify-center items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-orange-600">
                             <path fill-rule="evenodd" d="M7.84 1.804A1 1 0 0 1 8.82 1h2.36a1 1 0 0 1 .98.804l.331 1.652a6.993 6.993 0 0 1 1.929 1.115l1.598-.54a1 1 0 0 1 1.186.447l1.18 2.044a1 1 0 0 1-.205 1.251l-1.267 1.113a7.047 7.047 0 0 1 0 2.228l1.267 1.113a1 1 0 0 1 .206 1.25l-1.18 2.045a1 1 0 0 1-1.187.447l-1.598-.54a6.993 6.993 0 0 1-1.929 1.115l-.33 1.652a1 1 0 0 1-.98.804H8.82a1 1 0 0 1-.98-.804l-.331-1.652a6.993 6.993 0 0 1-1.929-1.115l-1.598.54a1 1 0 0 1-1.186-.447l-1.18-2.044a1 1 0 0 1 .205-1.251l1.267-1.114a7.05 7.05 0 0 1 0-2.227L1.821 7.773a1 1 0 0 1-.206-1.25l1.18-2.045a1 1 0 0 1 1.187-.447l1.598.54A6.992 6.992 0 0 1 7.51 3.456l.33-1.652ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd" />
                         </svg>
                     </a>
                 {% endif %}
             </td>
-            <td class="p-4 font-normal">{{ machine.state }}</td>
             <td class="p-4 font-normal opacity-30">ssh {{ machine.user }}@{{ machine.ip }}</td>
+            <td class="p-0 font-normal">
+                {% if machine.state == "running" and machine.protected == 0 %}
+                    <a href="/machines/{{machine.name}}/delete?cloud={{machine.cloud}}&cluster={{machine.cluster}}" class="flex justify-center items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-blue-600">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" />
+                          </svg>
+                    </a>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>
