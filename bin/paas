@@ -13,7 +13,7 @@ dotenv.load_dotenv()
 
 
 import services.ssh
-import services.vps
+import services.machines
 
 
 @click.group()
@@ -33,7 +33,7 @@ def list(instance: str, cloud: str, user: str):
 
     # map instance to machine
 
-    list_result = services.vps.list(cloud=cloud)
+    list_result = services.machines.list(cloud=cloud)
 
     if not (machine := list_result.map.get(instance)):
         _print_error("machine invalid")
@@ -68,7 +68,7 @@ def setup(instance: str, cloud: str, user: str):
 
     # map instance to machine
 
-    list_result = services.vps.list(cloud=cloud)
+    list_result = services.machines.list(cloud=cloud)
 
     if not (machine := list_result.map.get(instance)):
         _print_error("machine invalid")

@@ -12,7 +12,7 @@ import services.clusters
 import services.hetzner.servers
 import services.hetzner.ssh_keys
 import services.users
-import services.vps
+import services.machines
 
 logger = log.init("app")
 
@@ -26,9 +26,9 @@ app = fastapi.APIRouter(
 )
 
 @app.get("/clusters/{cluster_id}/add")
-def cluster_add(
+def clusters_add(
     request: fastapi.Request,
-    cluster_id: int,
+    cluster_id: int | str,
     user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
@@ -41,10 +41,10 @@ def cluster_add(
     logger.info(f"{context.rid_get()} cluster {cluster_id} add")
 
     try:
-        cluster = services.clusters.get_by_id(db_session=db_session, id=cluster_id)
+        cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_id)
 
-        list_result = services.vps.list(cloud=cluster.cloud, query=f"cluster:{cluster.name}")
-        machines_list = list_result.objects
+        list_result = services.machines.list(cloud=cluster.cloud, query=f"cluster:{cluster.name}")
+        machines_list = list_result.objects_list
 
         # generate new machine name
         machine_names = [machine.name for machine in machines_list]
@@ -65,7 +65,6 @@ def cluster_add(
 
         # add machine to cluster
         services.hetzner.servers.create(cluster=cluster, name=machine_name, ssh_key=ssh_key_name, tags=machine_tags)
-        # time.sleep(10)
 
         cluster.size_has += 1
         db_session.add(cluster)
@@ -105,8 +104,8 @@ def cluster_show(
 
     try:
         cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_id)
-        list_result = services.vps.list(cloud=cluster.cloud, query=f"cluster:{cluster.name}")
-        machines_list = list_result.objects
+        list_result = services.machines.list(cloud=cluster.cloud, query=f"cluster:{cluster.name}")
+        machines_list = list_result.objects_list
         query_seconds += list_result.seconds
     except Exception as e:
         query_code = 500
@@ -142,9 +141,9 @@ def cluster_show(
 
 
 @app.get("/clusters/{cluster_id}/sync")
-def cluster_sync(
+def clusters_sync(
     request: fastapi.Request,
-    cluster_id: int,
+    cluster_id: int | str,
     user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
@@ -153,9 +152,12 @@ def cluster_sync(
 
     logger.info(f"{context.rid_get()} cluster {cluster_id} sync")
 
-    sync_struct = services.clusters.sync(db_session=db_session, cluster_id=cluster_id)
+    try:
+        sync_struct = services.clusters.sync(db_session=db_session, cluster_id=cluster_id)
 
-    logger.info(f"{context.rid_get()} cluster {cluster_id} sync ok - changes {sync_struct.changes}")
+        logger.info(f"{context.rid_get()} cluster {cluster_id} sync ok - changes {sync_struct.changes}")
+    except Exception as e:
+        logger.error(f"{context.rid_get()} clusters {cluster_id} sync exception '{e}'")
 
     return fastapi.responses.RedirectResponse("/clusters")
 

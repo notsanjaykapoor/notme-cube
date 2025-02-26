@@ -9,10 +9,6 @@
         </p>
     {% endif %}
     <p class="text-xs font-bold mr-0">
-        <a href="/workers?query=state:active" class="text-blue-600">
-            workers: {{ workers_count }}
-        </a>
-        &nbsp;
         <span class="text-orange-600">
             backlog: {{ backlog_count }}
         </span>
@@ -23,40 +19,34 @@
     <thead class="font-normal text-left text-xs leading-6 text-center text-zinc-800">
         <tr>
             <th class="p-4">name</th>
-            <th class="p-4">partition</th>
-            <th class="p-4">msg</th>
             <th class="p-4">state</th>
-            <th class="p-4">worker</th>
             <th class="p-4">time</th>
             <th class="p-4">timestamp</th>
             <th class="p-4">id</th>
         </tr>
     </thead>
     <tbody>
-        {% for workq in workq_objects %}
+        {% for worker in worker_objects %}
         <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 font-normal text-center text-xs">
-            <td class="p-4">{{ workq.name }}</td>
-            <td class="p-4">{{ workq.partition }}</td>
-            <td class="p-4">{{ workq.msg }}</td>
+            <td class="p-4">{{ worker.name }}</td>
             <td class="p-4 font-bold">
-                {% if workq.state == "error" %}
+                {% if worker.state == "term" %}
                     <span class="cursor-help text-red-600" title="todo - error message">
-                        {{workq.state}}
+                        {{worker.state}}
                     </span>
-                {% elif workq.state == "completed" %}
+                {% elif worker.state == "busy" %}
                     <span class="text-blue-700">
-                        {{workq.state}}
+                        {{worker.state}}
                     </span>
                 {% else %}
                     <span class="text-sky-300">
-                        {{workq.state}}
+                        {{worker.state}}
                     </span>
                 {% endif %}
             </td>
-            <td class="p-4">{{ workq.worker }}</td>
-            <td class="p-4">{{ workq.work_time }}</td>
-            <td class="p-4">{{ workq.work_timestamp(tz="US/Central") }}</td>
-            <td class="p-4">{{ workq.id }}</td>
+            <td class="p-4"></td>
+            <td class="p-4"></td>
+            <td class="p-4">{{ worker.id }}</td>
         </tr>
         {% endfor %}
     </tbody>

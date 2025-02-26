@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="flex flex-col mx-auto mt-10">
+    <h3 class="mx-auto font-bold">
+        {{ app_name }}
+    </h3>
+    <div class="mt-2 mx-auto text-xs text-zinc-400">
+        @{{ app_version }}
+    </div>
+</div>
+
+<form>
+    <div class="flex justify-between mt-10">
+        <div class="basis-1/3 sm:mx-20 xs:mx-5 text-xs">
+            <input type="search" name="query" value="{{query}}" placeholder="{{prompt_text}}" autocomplete="off" hx-get="/workers" hx-target="#workers-table" hx-trigger="input changed delay:750ms, search" class="peer px-0 py-2.5 mx-0 h-full w-full border-b bg-transparent font-sans text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border-blue-gray-200 focus:border-blue-300 focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50">
+        </div>
+    </div>
+</form>
+
+<div class="flex flex-col mx-auto mt-10 xs:w-full sm:w-11/12" id="workers-table">
+    {% include "workers/list_table.html" %}
+</div>
+
+{% endblock %}

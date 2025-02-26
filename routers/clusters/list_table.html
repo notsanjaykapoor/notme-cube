@@ -11,6 +11,7 @@
         <tr>
             <th class="p-4">name</th>
             <th class="p-4">cloud</th>
+            <th class="p-4">services</th>
             <th class="p-4">size_ask</th>
             <th class="p-4">size_has</th>
             <th class="p-4">state</th>
@@ -22,17 +23,18 @@
         {% for cluster in clusters_list %}
         <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
             <td class="p-4 font-normal">
-                <a href="/clusters/{{cluster.id}}/machines" class="text-blue-700 font-bold">
+                <a href="/clusters/{{cluster.name}}/machines" class="text-blue-700 font-bold">
                     {{ cluster.name }}
                 </a>
             </td>
             <td class="p-4 font-normal">{{ cluster.cloud }}</td>
+            <td class="p-4 font-normal">{{ cluster.services }}</td>
             <td class="p-4 font-normal">{{ cluster.size_ask }}</td>
             <td class="p-4 font-normal">{{ cluster.size_has }}</td>
             <td class="p-4 font-normal">{{ cluster.state }}</td>
             <td class="p-4 font-normal">{{ cluster.id }}</td>
             <td class="p-4 font-normal">
-                <a href="/clusters/{{cluster.id}}/sync">
+                <a href="/clusters/{{cluster.name}}/sync">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 font-bold mx-auto text-blue-600">
                         <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H3.989a.75.75 0 0 0-.75.75v4.242a.75.75 0 0 0 1.5 0v-2.43l.31.31a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm1.23-3.723a.75.75 0 0 0 .219-.53V2.929a.75.75 0 0 0-1.5 0V5.36l-.31-.31A7 7 0 0 0 3.239 8.188a.75.75 0 1 0 1.448.389A5.5 5.5 0 0 1 13.89 6.11l.311.31h-2.432a.75.75 0 0 0 0 1.5h4.243a.75.75 0 0 0 .53-.219Z" clip-rule="evenodd" />
                     </svg>    

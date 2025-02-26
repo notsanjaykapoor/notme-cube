@@ -3,27 +3,26 @@ import os
 import subprocess
 import time
 
-import hcloud
-
 import models
+import services.hetzner.servers
+
 
 @dataclasses.dataclass
 class Struct:
     code: int
-    map: dict[str, models.Machine]
-    objects: list[models.Machine]
+    objects_map: dict[str, models.Machine]
+    objects_list: list[models.Machine]
     seconds: int
     errors: list[str]
 
 
 def list(cloud: str, query: str) -> Struct:
-    if cloud not in [models.machine.CLOUD_GCP, models.machine.CLOUD_HETZNER]:
-        raise ValueError(f"cloud {cloud} invalid")
-
     if cloud == models.machine.CLOUD_GCP:
         result = _list_gcp(query=query)
     elif cloud == models.machine.CLOUD_HETZNER:
-        result = _list_hetzner(query=query)
+        result = services.hetzner.servers.list(query=query)
+    else:
+        raise ValueError(f"cloud {cloud} invalid")
 
     return result
 
@@ -31,8 +30,8 @@ def list(cloud: str, query: str) -> Struct:
 def _list_gcp(query: str) -> Struct:
     struct = Struct(
         code=0,
-        map={},
-        objects=[],
+        objects_map={},
+        objects_list=[],
         seconds=0,
         errors=[],
     )
@@ -89,42 +88,9 @@ def _list_gcp(query: str) -> Struct:
                     machine.state = token.lower()
 
             if not query or query in machine.name:
-                struct.map[machine.name] = machine
-                struct.objects.append(machine)
+                struct.objects_map[machine.name] = machine
+                struct.objects_list.append(machine)
 
-    struct.objects = sorted(struct.objects, key=lambda o: o.name)
+    struct.objects_list = sorted(struct.objects_list, key=lambda o: o.name)
 
     return struct         
-
-
-def _list_hetzner(query: str) -> Struct:
-    struct = Struct(
-        code=0,
-        map={},
-        objects=[],
-        seconds=0,
-        errors=[],
-    )
-
-    t1 = time.time()
-
-    client = hcloud.Client(token=os.environ.get("VPS_HETZNER_TOKEN"))
-    servers = client.servers.get_all()
-
-    struct.seconds = round(time.time() - t1, 2)
-
-    for server in servers:
-        machine = models.Machine(
-            cloud=models.machine.CLOUD_HETZNER,
-            id=server.id,
-            ip=server.public_net.ipv4.ip,
-            name=server.name,
-            state=server.status,
-            user=os.environ.get("VPS_HETZNER_USER"),
-        )
-
-        if not query or query in machine.name:
-            struct.map[machine.name] = machine
-            struct.objects.append(machine)
-
-    return struct

@@ -1,9 +1,9 @@
 import os
 
 
-def clouds() -> list[str]:
+def list() -> list[str]:
     """
-    list of vps providers supported
+    list of supported vps providers
     """
     clouds = [s.strip() for s in (os.environ.get("VPS_PROVIDERS") or "").split(",") if s]
 

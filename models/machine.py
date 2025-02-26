@@ -31,3 +31,7 @@ class Machine:
     def protected(self) -> int:
         # defaults to 0 which means not protected
         return self.tags.get("protected") or 0
+
+    @property
+    def services(self) -> str:
+        return self.tags.get("services") or ""

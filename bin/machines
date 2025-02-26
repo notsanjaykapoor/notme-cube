@@ -8,7 +8,8 @@ sys.path.append(".")
 import click
 import dot_init
 
-import services.vms
+import services.clouds
+import services.machines
 
 
 @click.group()
@@ -25,14 +26,15 @@ def list(cloud: str):
     if cloud:
         clouds_list = [cloud]
     else:
-        clouds_list = services.vps.clouds()
+        clouds_list = services.clouds.list()
 
     for cloud in clouds_list:
-        list_result = services.vps.list(cloud=cloud, query="")
+        list_result = services.machines.list(cloud=cloud, query="")
 
         for name, machine in list_result.map.items():
             _print_status(f"machine '{name}' ip '{machine.ip}'")
 
+    _print_ok("machines list ok")
 
 def _print_error(s: str):
     print("\x1b[1;31m" + s + "\x1b[0m", flush=True)
