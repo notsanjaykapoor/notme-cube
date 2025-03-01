@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+sys.path.insert(1, os.path.join(sys.path[0], "../.."))
+
+import dot_init
+import services.hetzner.servers
+
+import click
+
+@click.group()
+def cli():
+    pass
+
+
+@click.command()
+@click.option("--name", default=None, required=True, help="server name")
+@click.option("--ssh-key", default=None, required=True, help="ssh key name")
+def create(name: str, ssh_key: str):
+    """ create server """
+
+    _print_status("server create")
+
+    location = os.environ.get("VPS_HETZNER_SERVER_LOCATION")
+    type_ = os.environ.get("VPS_HETZNER_SERVER_TYPE")
+
+    create_struct = services.hetzner.servers.create(
+        location=location,
+        name=name,
+        ssh_key=ssh_key,
+        type=type_,
+        tags={},
+    )
+
+    if create_struct.code != 0:
+        _print_error(f"server create error {create_struct.errors}")
+        exit(create_struct.code)
+
+    _print_ok(f"server create ok - name '{create_struct.server.name}'")
+
+
+@click.command()
+@click.option("--id", default=None, required=True, help="server id")
+def delete(id: int):
+    """ delete server """
+
+    _print_status(f"server delete {id}")
+
+    delete_struct = services.hetzner.servers.delete(id=id)
+
+    if delete_struct.code != 0:
+        _print_error(f"server delete error {delete_struct.errors}")
+        exit(delete_struct.code)
+
+    _print_ok(f"server delete ok")
+
+
+
+@click.command()
+def list():
+    """ list servers """
+
+    servers_struct = services.hetzner.servers.list()
+
+    for index, server in enumerate(servers_struct.objects_list):
+        _print_status(f"server {index+1}: name '{server.name}', id {server.id}")
+
+    _print_ok("servers ok")
+
+
+def _print_error(s: str):
+    print("\x1b[1;31m" + s + "\x1b[0m", flush=True)
+
+
+def _print_ok(s: str):
+    print("\x1b[1;32m" + s + "\x1b[0m", flush=True)
+
+
+def _print_status(s: str):
+    print("\x1b[1;36m" + s + "\x1b[0m", flush=True)
+
+
+cli.add_command(create)
+cli.add_command(delete)
+cli.add_command(list)
+
+
+if __name__ == "__main__":
+    cli()
