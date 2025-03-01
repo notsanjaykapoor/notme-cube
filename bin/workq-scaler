@@ -12,17 +12,18 @@ import dot_init
 
 import asyncio
 import click
-import nats
+import sqlmodel
 
 import log
 import models
+import services.clusters.requests
 import services.database
+import services.hetzner.servers
 import services.workers
 
 logger = log.init("api")
 
 shutdown: bool = False
-
 
 workers_set = set()
 workers_map = {}
@@ -43,14 +44,23 @@ def cli():
 def signal_handler(signum, frame):
     global shutdown
     shutdown = True
-    logger.info("workq scaler signal handler ... preparing to shutdown")
+    logger.info("[workq-scaler] signal handler ... preparing to shutdown")
 
 
 @click.command()
 @click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
-@click.option('--interval', default=5, required=False, help="")
+@click.option('--interval', default=3, required=False, help="")
 @coro
 async def run(db_uri: str, interval: int) -> dict:
+    """
+    The scaler is responsible for listening for incoming cluster requests and managing cluster machine size based on those requests.
+
+    Recovery conditions:
+
+    When the scaler is processing a cluster request and its shutdown, the up/down request is left in an unknown state.  The recovery
+    for this situation is to find any requests in the processing state (there should be at most 1), determine how many machines are 
+    running and set this value as the cluster size_has.  The scaler is then resumed to process the request as normal.
+    """
     db_uri = db_uri or os.environ.get("DATABASE_URL")
 
     if not db_uri:
@@ -59,50 +69,60 @@ async def run(db_uri: str, interval: int) -> dict:
     # install signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
-    # clear workers table
+    logger.info("[workq-scaler] starting")
+
     with services.database.session.get() as db_session:
-        services.workers.truncate(db_session=db_session)
+        requests = services.clusters.requests.get_processing_all(db_session=db_session)
 
-    logger.info("workq scaler starting")
+        if requests:
+            _startup_recovery(db_session=db_session, requests=requests)
 
-    nats_client = await nats.connect(os.environ.get("NATS_URI"))
-
-    nats_sub = await nats_client.subscribe("workers.*", "", message_handler)
-    
     while not shutdown:
-        await asyncio.sleep(interval)
+        with services.database.session.get() as db_session:
+            request = services.clusters.requests.get_pending_any(db_session=db_session)
 
-    logger.info("workq scaler nats closing")
+            if request:
+                cluster = services.clusters.get_by_id(
+                    db_session=db_session,
+                    id=request.cluster_id,
+                )
 
-    await nats_client.close()
+                logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has}")
 
-    logger.info("workq scaler exiting")
+                services.clusters.requests.process(
+                    db_session=db_session,
+                    request=request,
+                )
+            else:
+                await asyncio.sleep(interval)
+
+    logger.info("[workq-scaler] exiting")
 
 
-async def message_handler(msg):
-    msg_data = json.loads(msg.data.decode())
+def _startup_recovery(db_session: sqlmodel.Session, requests: list[models.ClusterRequest]) -> int:
+    for request in requests:
+        cluster = services.clusters.get_by_id(
+            db_session=db_session,
+            id=request.cluster_id,
+        )
 
-    with services.database.session.get() as db_session:
-        if msg.subject.endswith("pong"):
-            logger.info(f"workq scaler pong {msg_data}")
-            worker_id = msg_data.get("worker")
-            workers_set.add(worker_id)
+        logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery try")
 
-            # add worker to db
-            services.workers.get_by_name(
-                db_session=db_session, name=worker_id,
-            ) or services.workers.create(
-                db_session=db_session, name=worker_id,
-            )
-        elif msg.subject.endswith("shutdown"):
-            logger.info(f"workq scaler shutdown {msg_data}")
-            worker_id = msg_data.get("worker")
-            workers_set.remove(worker_id)
+        servers_struct = services.hetzner.servers.list(query=f"cluster:{cluster.name}")
+        server_machines = servers_struct.objects_list
 
-            # remove worker from db
-            services.workers.delete_by_name(db_session=db_session, name=worker_id)
+        server_machines = [machine for machine in server_machines if machine.state in models.machine.STATES_UP]
 
-    logger.info(f"workq scaler workers {workers_set}")
+        if cluster.size_has != len(server_machines):
+            # adjust cluster value
+            cluster.size_has = len(server_machines)
+
+            db_session.add(cluster)
+            db_session.commit()
+
+            logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery changes")
+
+    return 0
 
 
 cli.add_command(run)

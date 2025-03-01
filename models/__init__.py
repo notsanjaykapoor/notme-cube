@@ -1,4 +1,5 @@
 from .cluster import Cluster
+from .cluster_request import ClusterRequest
 from .container import Container
 from .machine import Machine
 from .passw import Passw

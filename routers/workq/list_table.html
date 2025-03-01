@@ -13,7 +13,13 @@
             workers: {{ workers_count }}
         </a>
         &nbsp;
-        <span class="text-orange-600">
+        {% if backlog_count > 0 %}
+            {% set backlog_color = "text-orange-600" %}
+        {% else %}
+            {% set backlog_color = "text-sky-300" %}
+        {% endif %}
+
+        <span class="{{backlog_color}}">
             backlog: {{ backlog_count }}
         </span>
     </p>

@@ -6,6 +6,9 @@ import sqlalchemy
 import sqlmodel
 
 
+MSG_SHUTDOWN = "shutdown"
+MSG_SLEEP = "sleep"
+
 QUEUE_WORK = "work"
 
 STATE_COMPLETED = "completed"

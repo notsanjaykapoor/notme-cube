@@ -21,7 +21,7 @@ def test_cluster_create(db_session: sqlmodel.Session):
     assert cluster.server_type == "cpx11"
     assert cluster.size_ask == 0
     assert cluster.size_has == 0
-    assert cluster.state == "active"
+    assert cluster.state == "running"
 
     # cluster name is unique
 

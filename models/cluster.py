@@ -11,8 +11,9 @@ SERVER_IMAGE_DEFAULT = "ubuntu-24.04"
 SERVER_LOC_DEFAULT = "ash"
 SERVER_TYPE_DEFAULT = "cpx11"
 
-STATE_ACTIVE = "active"
 STATE_DELETED = "deleted"
+STATE_RUNNING = "running"
+STATE_SCALING = "scaling"
 
 
 class Cluster(sqlmodel.SQLModel, table=True):
@@ -36,6 +37,11 @@ class Cluster(sqlmodel.SQLModel, table=True):
     @property
     def cloud(self) -> str:
         return self.data.get("cloud") or ""
+
+    @property
+    def protected(self) -> int:
+        # defaults to 0 which means not protected
+        return int(self.data.get("protected") or 0)
 
     @property
     def server_image(self) -> str:

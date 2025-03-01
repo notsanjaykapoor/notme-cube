@@ -8,10 +8,16 @@
             {{query_result}}
         </p>
     {% endif %}
-    <p class="text-xs font-bold mr-0">
-        <span class="text-orange-600">
+    <p class="text-xs mr-0">
+        {% if backlog_count > 0 %}
+            {% set backlog_color = "text-orange-600" %}
+        {% else %}
+            {% set backlog_color = "text-sky-300" %}
+        {% endif %}
+
+        <a href="/workq" class="font-bold {{backlog_color}}">
             backlog: {{ backlog_count }}
-        </span>
+        </a>
     </p>
 </div>
 
@@ -23,6 +29,7 @@
             <th class="p-4">time</th>
             <th class="p-4">timestamp</th>
             <th class="p-4">id</th>
+            <th class="p-4"></th>
         </tr>
     </thead>
     <tbody>
@@ -47,6 +54,15 @@
             <td class="p-4"></td>
             <td class="p-4"></td>
             <td class="p-4">{{ worker.id }}</td>
+            <td>
+                {% if worker.state == "idle" %}
+                    <a href="/workers/{{worker.name}}/shutdown" class="flex justify-center items-center" title="shutdown worker">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-blue-700">
+                            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                        </svg>
+                    </a>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>

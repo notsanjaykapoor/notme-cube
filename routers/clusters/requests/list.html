@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="flex flex-col mx-auto mt-10">
+    <h3 class="mx-auto font-bold">
+        {{ app_name }}
+    </h3>
+    <div class="mt-2 mx-auto text-xs text-zinc-400">
+        @{{ app_version }}
+    </div>
+</div>
+
+<div class="flex justify-between mt-10">
+    <div class="sm:mx-20 xs:mx-5 mt-5 text-xs text-zinc-400">
+        <a href="/clusters" class="text-blue-700 font-bold">
+            clusters
+        </a>
+        &nbsp;/&nbsp;
+        <a href="/clusters/{{cluster.name}}/machines" class="text-blue-700 font-bold">
+            {{cluster.name}}
+        </a>
+        &nbsp;/&nbsp;
+        requests
+    </div>
+</div>
+
+<div class="flex flex-col mt-10" id="requests-div">
+    {% include "clusters/requests/list_table.html" %}
+</div>
+
+{% endblock %}

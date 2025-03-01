@@ -8,6 +8,8 @@ import sqlmodel.pool
 
 import dot_init  # noqa: F401
 import models
+import services.clusters
+import services.database
 import services.users
 
 # set app env
@@ -70,6 +72,23 @@ def session_fixture():
     connection.close()
 
 
+@pytest.fixture(name="cluster_1")
+def cluster_1_fixture(db_session: sqlmodel.Session):
+    cluster = services.clusters.create(
+        db_session=db_session,
+        name="cluster-1",
+    )
+
+    db_session.add(cluster)
+    db_session.commit()
+
+    assert cluster.id
+
+    yield cluster
+
+    services.database.truncate_tables(db_session=db_session, table_names=["clusters"])
+
+
 @pytest.fixture(name="user_1")
 def user_1_fixture(db_session: sqlmodel.Session):
     user = models.User(
@@ -85,4 +104,4 @@ def user_1_fixture(db_session: sqlmodel.Session):
 
     yield user
 
-    services.users.truncate(db_session=db_session)
+    services.database.truncate_tables(db_session=db_session, table_names=["users"])

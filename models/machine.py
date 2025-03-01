@@ -3,6 +3,19 @@ import dataclasses
 CLOUD_GCP = "gcp"
 CLOUD_HETZNER = "hetzner"
 
+# hetzner server states
+STATE_DELETING = "deleting"
+STATE_INITIALIZING = "initializing"
+STATE_MIGRATING = "migrating"
+STATE_OFF = "off"
+STATE_REBUILDING = "rebuilding"
+STATE_RUNNING = "running"
+STATE_STARTING = "starting"
+STATE_STOPPING = "stopping"
+STATE_UNKNOWN = "unknown"
+
+STATES_UP = [STATE_INITIALIZING, STATE_RUNNING, STATE_STARTING]
+
 
 @dataclasses.dataclass
 class Machine:

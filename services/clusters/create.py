@@ -14,7 +14,7 @@ def create(db_session: sqlmodel.Session, name: str) -> models.Cluster:
         name=name,
         size_ask=0,
         size_has=0,
-        state=models.cluster.STATE_ACTIVE,
+        state=models.cluster.STATE_RUNNING,
     )
 
     db_session.add(cluster)

@@ -7,7 +7,7 @@ import models
 
 
 def get_by_id_or_name(db_session: sqlmodel.Session, id: int|str) -> typing.Optional[models.Cluster]:
-    if re.search(r"^\d+$", id):
+    if re.search(r"^\d+$", str(id)):
         return get_by_id(db_session, id)
     else:
         return get_by_name(db_session, id)

@@ -3,7 +3,10 @@ import os
 import subprocess
 import time
 
+import sqlmodel
+
 import models
+import services.clusters
 import services.hetzner.servers
 
 
@@ -16,13 +19,16 @@ class Struct:
     errors: list[str]
 
 
-def list(cloud: str, query: str) -> Struct:
-    if cloud == models.machine.CLOUD_GCP:
-        result = _list_gcp(query=query)
-    elif cloud == models.machine.CLOUD_HETZNER:
-        result = services.hetzner.servers.list(query=query)
+def list(cluster: models.Cluster) -> Struct:
+    if not cluster:
+        raise ValueError(f"cluster invalid")
+
+    if cluster.cloud == models.machine.CLOUD_GCP:
+        result = _list_gcp(query="")
+    elif cluster.cloud == models.machine.CLOUD_HETZNER:
+        result = services.hetzner.servers.list(query=f"cluster:{cluster.name}")
     else:
-        raise ValueError(f"cloud {cloud} invalid")
+        raise ValueError(f"cloud {cluster.cloud} invalid")
 
     return result
 

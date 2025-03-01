@@ -1,0 +1,30 @@
+<table class="mt-5 sm:mx-20 xs:mx-5 xs:w-full sm:w-10/12" id="requests-table">
+    <thead class="font-normal text-center text-xs leading-6 text-zinc-800">
+        <tr>
+            <th class="p-4">name</th>
+            <th class="p-4">request size</th>
+            <th class="p-4">cluster size</th>
+            <th class="p-4">data</th>
+            <th class="p-4">state</th>
+            <th class="p-4">id</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for request in requests_list %}
+            {% if request.state == "completed" %}
+                {% set request_color = "text-blue-700" %}
+            {% else %}
+                {% set request_color = "text-sky-400" %}
+            {% endif %}
+
+            <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
+                <td class="p-4 font-normal">{{ request.name }}</td>
+                <td class="p-4 font-bold {{request_color}}">{{ request.size_ask }}</td>
+                <td class="p-4 font-bold {{request_color}}">{{ request.size_has }}</td>
+                <td class="p-4 font-normal">{{ request.machine_name }}</td>
+                <td class="p-4 font-bold {{request_color}}">{{ request.state }}</td>
+                <td class="p-4 font-normal">{{ request.id }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

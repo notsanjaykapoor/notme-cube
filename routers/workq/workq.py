@@ -37,7 +37,7 @@ def workq_list(
 ):
     """
     """
-    logger.info(f"{context.rid_get()} workq query '{query}'")
+    logger.info(f"{context.rid_get()} workq list query '{query}'")
 
     if user_id == 0:
         return fastapi.responses.RedirectResponse("/login")
@@ -55,13 +55,15 @@ def workq_list(
         workers_count = len(workers_list_result.objects)
 
         backlog_count = services.workq.count_queued(db_session=db_session, queue=models.workq.QUEUE_WORK)
+
+        logger.info(f"{context.rid_get()} workq list query '{query}' ok")
     except Exception as e:
         backlog_count = 0
         workq_objects = []
         workers_count = 0
         query_code = 400
         query_result = f"exception {e}"
-        logger.error(f"{context.rid_get()} workq exception '{e}'")
+        logger.error(f"{context.rid_get()} workq list exception '{e}'")
 
     if "HX-Request" in request.headers:
         template = "workq/list_table.html"

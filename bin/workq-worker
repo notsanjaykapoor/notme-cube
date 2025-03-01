@@ -49,11 +49,13 @@ def signal_handler(signum, frame):
 @click.command()
 @click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
 @click.option('--queue', default=None, required=True, help="nats queue group name")
-@click.option('--interval', default=5, required=False, help="sleep interval")
-@click.option('--id', default="", required=False, help="worker id")
+@click.option('--interval', default=5, required=False, help="nats queue check sleep interval")
+@click.option('--id', default=ulid.new().str, required=False, help="worker id")
 @click.option('--subject', default="workers", required=False, help="nats subject name")
 @coro
 async def run(db_uri: str, queue: str, interval: int, id: str, subject: str) -> dict:
+    global shutdown
+
     db_uri = db_uri or os.environ.get("DATABASE_URL")
 
     if not db_uri:
@@ -66,7 +68,7 @@ async def run(db_uri: str, queue: str, interval: int, id: str, subject: str) -> 
         logger.error(f"[workq-worker] queue '{queue}' handler required")
         exit(1)
 
-    worker_me["worker_id"] = id or ulid.new().str
+    worker_me["worker_id"] = id
     worker_me["worker_state"] = models.worker.STATE_IDLE
 
     worker_id = worker_me.get("worker_id")
@@ -112,9 +114,14 @@ async def run(db_uri: str, queue: str, interval: int, id: str, subject: str) -> 
                 logger.info(f"[workq-worker] {worker_id} queue '{queue}' job {job_id} nats ack")
 
                 try:
-                    # process message
-                    handler = services.workq.route(queue=queue)
-                    await handler.call(db_session=db_session, job=job)
+                    if job.msg == models.workq.MSG_SHUTDOWN:
+                        # shutdown message
+                        shutdown = True
+                        logger.info(f"[workq-worker] {worker_id} queue '{queue}' job {job_id} shutdown message")
+                    else:
+                        # call handler to process message
+                        handler = services.workq.route(queue=queue)
+                        await handler.call(db_session=db_session, job=job)
 
                     job_state = models.workq.STATE_COMPLETED
 
