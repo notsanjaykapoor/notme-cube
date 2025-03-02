@@ -46,7 +46,7 @@ def test_request_add(db_session: sqlmodel.Session, cluster_1: models.Cluster):
     assert request_result.code == 422
     assert request_result.object == None
 
-    # not valid to add requests if cluster id is invalid
+    # not valid to add requests with invalid cluster id
 
     request_result = services.clusters.requests.add(
         db_session=db_session,
@@ -56,6 +56,8 @@ def test_request_add(db_session: sqlmodel.Session, cluster_1: models.Cluster):
 
     assert request_result.code == 422
     assert request_result.object == None
+
+    # get pending request
 
     get_result = services.clusters.requests.get_pending_by_cluster_id(
         db_session=db_session,

@@ -85,6 +85,38 @@ def clusters_list(
     return response
 
 
+@app.get("/clusters/{cluster_id}/delete")
+def clusters_delete(
+    request: fastapi.Request,
+    cluster_id: int | str,
+    user_id: int = fastapi.Depends(main_shared.get_user_id),
+    db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
+):
+    """
+    Delete cluster.
+    """
+    if user_id == 0:
+        return fastapi.responses.RedirectResponse("/login")
+
+    logger.info(f"{context.rid_get()} cluster '{cluster_id}' delete try")
+
+    http_referer = request.headers.get("referer")
+
+    try:
+        cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_id)
+
+        delete_code = services.clusters.delete(db_session=db_session, cluster=cluster)
+
+        if delete_code != 0:
+            logger.error(f"{context.rid_get()} clusters '{cluster_id}' delete error {delete_code.code}")
+        else:
+            logger.info(f"{context.rid_get()} cluster '{cluster_id}' delete ok")
+    except Exception as e:
+        logger.error(f"{context.rid_get()} clusters '{cluster_id}' delete exception '{e}'")
+
+    return fastapi.responses.RedirectResponse(http_referer)
+
+
 @app.get("/clusters/{cluster_id}/machines")
 def clusters_machines_list(
     request: fastapi.Request,

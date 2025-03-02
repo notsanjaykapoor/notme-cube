@@ -18,6 +18,7 @@
             <th class="p-4">state</th>
             <th class="p-4">id</th>
             <th class="p-4">requests</th>
+            <th class="p-4"></th>
         </tr>
     </thead>
     <tbody>
@@ -69,6 +70,15 @@
                             <path fill-rule="evenodd" d="M2 10a.75.75 0 0 1 .75-.75h12.59l-2.1-1.95a.75.75 0 1 1 1.02-1.1l3.5 3.25a.75.75 0 0 1 0 1.1l-3.5 3.25a.75.75 0 1 1-1.02-1.1l2.1-1.95H2.75A.75.75 0 0 1 2 10Z" clip-rule="evenodd" />
                         </svg>
                     </a>
+                </td>
+                <td class="p-4 font-normal">
+                    {% if cluster.deletable == 1 %}
+                        <a href="/clusters/{{cluster.name}}/delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 font-bold mx-auto text-red-600">
+                                <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                            </svg>
+                        </a>
+                    {% endif %}
                 </td>
             </tr>
         {% endfor %}

@@ -77,6 +77,7 @@ def cluster_1_fixture(db_session: sqlmodel.Session):
     cluster = services.clusters.create(
         db_session=db_session,
         name="cluster-1",
+        services="test",
     )
 
     db_session.add(cluster)

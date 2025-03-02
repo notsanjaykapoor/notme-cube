@@ -7,6 +7,7 @@ def test_cluster_create(db_session: sqlmodel.Session):
     cluster = services.clusters.create(
         db_session=db_session,
         name="test",
+        services="workq",
     )
 
     machine_name = services.clusters.machine_name_generate(cluster=cluster, names=[])

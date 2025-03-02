@@ -39,6 +39,14 @@ class Cluster(sqlmodel.SQLModel, table=True):
         return self.data.get("cloud") or ""
 
     @property
+    def deletable(self) -> int:
+        """ clusters can be deleted iff they have 0 machines """
+        if self.size_has == 0 and self.state == STATE_RUNNING:
+            return 1
+        else:
+            return 0
+
+    @property
     def protected(self) -> int:
         # defaults to 0 which means not protected
         return int(self.data.get("protected") or 0)

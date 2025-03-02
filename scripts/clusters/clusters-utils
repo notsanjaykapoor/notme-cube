@@ -17,16 +17,18 @@ def cli():
 
 
 @click.command()
-@click.option("--name", default=None, required=True, help="server name")
-def create(name: str):
+@click.option("--name", default=None, required=True, help="cluster name")
+@click.option("--service", default=None, required=True, help="cluster services, comma separated")
+def create(name: str, service: str):
     """ create cluster """
 
-    _print_status("cluster create")
+    _print_status(f"cluster create '{name}' with services '{services}'")
 
     with services.database.session.get() as db_session:
         cluster = services.clusters.create(
             db_session=db_session,
             name=name,
+            services=service,
         )
 
         _print_ok(f"cluster create ok - name '{cluster.name}'")
