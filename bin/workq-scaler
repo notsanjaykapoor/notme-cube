@@ -122,9 +122,6 @@ async def run(name: str, db_uri: str, request_interval: int, health_interval: in
                 _cluster_health(db_session=db_session, cluster=cluster)
                 health_unix_t1 = int(time.time())
 
-            # if not request:
-            #     await asyncio.sleep(request_interval)
-
     logger.info("[workq-scaler] exiting")
 
 
@@ -148,7 +145,7 @@ def _cluster_health(db_session: sqlmodel.Session, cluster: models.Cluster) -> in
             if start_result.code == 0:
                 logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' container '{container.name}' up")
             else:
-                logger.error(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' container '{container.name}' exception")
+                logger.error(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' container '{container.name}' exception - {start_result.errors}")
 
     return 0
                       

@@ -64,10 +64,10 @@ def start_service(machine: models.Machine, service: str) -> Struct:
 
     docker_run_cmd = f"{service_dict.get('docker_run')} {docker_image} {service_dict.get('docker_entrypoint')}"
 
-    struct.code, result = services.ssh.exec(host=machine.ip, user=machine.user, cmd=docker_run_cmd)
+    struct.code, ssh_result = services.ssh.exec(host=machine.ip, user=machine.user, cmd=docker_run_cmd)
 
     if struct.code != 0:
-        struct.errors.append(result)
+        struct.errors.append(ssh_result)
         return struct
 
     struct.container = models.Container(

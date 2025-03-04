@@ -91,7 +91,7 @@ logging_config = {
 }
 
 
-def init(name: str):
+def init(name: str) -> logging.Logger:
     logging.config.dictConfig(logging_config)
 
     logger = logging.getLogger(name)

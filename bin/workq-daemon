@@ -77,13 +77,6 @@ async def run(db_uri: str, queue: str, interval: int, subject: str) -> dict:
 
     # todo - how do we find workers that might have exited while processing a job
 
-    # todo - find jobs that were not finished by this worker
-    # cleanup_count = services.workq.cleanup(
-    #     db_session=db_session,
-    #     queue=queue,
-    #     partition=-1,
-    # )
-
     nats_client = await services.nats.connect(name="workq-daemon")
     nats_client_id = nats_client.client_id
 

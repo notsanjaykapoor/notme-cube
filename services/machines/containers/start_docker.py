@@ -33,15 +33,18 @@ def start_docker(machine: models.Machine) -> Struct:
 
     if struct.code != 0:
         # install and run docker daemon
-        struct.code, result = services.ssh.exec(host=machine.ip, user=machine.user, cmd=cmd_install)
-        
-    if struct.code == 0:
-        struct.container = models.Container(
-            id="",
-            image="",
-            name=models.service.SERVICE_DOCKER,
-            state=models.container.STATE_UP,
-        )
+        struct.code, ssh_result = services.ssh.exec(host=machine.ip, user=machine.user, cmd=cmd_install)
+
+    if struct.code != 0:
+        struct.errors.append(ssh_result)
+        return struct
+
+    struct.container = models.Container(
+        id="",
+        image="",
+        name=models.service.SERVICE_DOCKER,
+        state=models.container.STATE_UP,
+    )
 
     struct.seconds = round(time.time() - t1, 2)
 

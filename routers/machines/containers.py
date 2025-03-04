@@ -53,10 +53,10 @@ def machines_containers_list(
         check_result = services.machines.containers.check(machine=machine)
         containers_list = check_result.containers_running + check_result.containers_missing
 
-        if check_result.containers_status == 0:
+        if check_result.code == 0:
             logger.info(f"{context.rid_get()} cluster '{cluster_id}' machine '{machine_name}' containers list ok")
         else:
-            logger.error(f"{context.rid_get()} cluster '{cluster_id}' machine '{machine_name}' containers list error {check_result.containers_status}")
+            logger.error(f"{context.rid_get()} cluster '{cluster_id}' machine '{machine_name}' containers list error - {check_result.errors}")
     except Exception as e:
         logger.error(f"{context.rid_get()} cluster '{cluster_id}' machines containers list exception '{e}'")
 
