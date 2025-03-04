@@ -37,7 +37,18 @@ make dev
 
 I have encountered the following problem a few times - you have a very dynamic workload that varies greatly during the day and want distributed queues to handle those peak workloads efficiently.  Kubernetes and Kafka are really incredible tools and I have used them often.  I have also seen some pretty decent size cloud bills.  
 
-This distributed queue solution uses lower cost vps providers (e.g. Hetzner), Nats (a wonderful networking library), and Postgres queues to implement a solution that can distribute workloads across multiple machines and auto scale those machines as necessary.
+This distributed queue solution uses lower cost vps providers with well documented api's (e.g. Digital Ocean, Hetzner), an open source networking infrastructure called Nats, and Postgres as a job queue to implement a solution that can distribute workloads across multiple machines and auto scale up/down those machines as required.
+
+Each cluster is a group of machines, which are scaled up/down as necessary:
+
+![Machine Scaling Example](https://ik.imagekit.io/notme001/readme/notme_cluster_scaling.png "machine scaling example")
+
+![Machine Scaled Example](https://ik.imagekit.io/notme001/readme/notme_cluster_scaled.png "machine scaled example")
+
+As a machine comes up, it joins the work group dynamically and is available to process jobs:
+
+![Work Queue Example](https://ik.imagekit.io/notme001/readme/notme_cluster_workq_1.png "work queue example")
+
 
 #### Password Manager
 
