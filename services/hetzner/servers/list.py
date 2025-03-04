@@ -5,7 +5,7 @@ import time
 import hcloud
 
 import models
-
+import services.hetzner.servers
 
 @dataclasses.dataclass
 class Struct:
@@ -38,20 +38,9 @@ def list(query: str=""):
     struct.seconds = round(time.time() - t1, 2)
 
     for server in servers:
-        machine = models.Machine(
-            cloud=models.machine.CLOUD_HETZNER,
-            id=server.id,
-            image=server.image.name,
-            ip=server.public_net.ipv4.ip,
-            location=server.datacenter.location.name,
-            name=server.name,
-            state=server.status,
-            tags=server.labels,
-            type=server.server_type.name,
-            user=os.environ.get("VPS_HETZNER_USER"),
-        )
+        machine = services.hetzner.servers.machine_from_server(server=server)
 
-        if not query_norm: #or query in machine.name:
+        if not query_norm:
             struct.objects_map[machine.name] = machine
             struct.objects_list.append(machine)
         else:

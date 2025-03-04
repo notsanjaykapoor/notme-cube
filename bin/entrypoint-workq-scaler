@@ -1,3 +1,4 @@
 #!/bin/bash
 
-source .venv/bin/activate && ./bin/workq-scaler run
+source .venv/bin/activate
+exec ./bin/workq-scaler run --name workq

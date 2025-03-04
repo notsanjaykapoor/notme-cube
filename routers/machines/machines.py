@@ -6,12 +6,10 @@ import sqlmodel
 import context
 import log
 import main_shared
-import services.clouds
+import models
 import services.clusters
-import services.hetzner.servers
-import services.users
 import services.machines
-import services.machines.containers
+import services.users
 
 logger = log.init("app")
 
@@ -24,46 +22,80 @@ app = fastapi.APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-
-# deprecated
-@app.get("/clusters/{cluster_id}/machines/{machine_name}/delete")
-def machines_delete(
+@app.get("/clusters/{cluster_id}/machines")
+def clusters_machines_list(
     request: fastapi.Request,
     cluster_id: int | str,
-    machine_name: str,
-    cloud: str=services.clouds.default(),
+    query: str = "",
     user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
-    logger.info(f"{context.rid_get()} cluster '{cluster_id}' machine '{machine_name}' delete")
-
+    """
+    List all cluster machines.
+    
+    The cluster_id 'all' is a keyword that means all clusters.
+    """
     if user_id == 0:
         return fastapi.responses.RedirectResponse("/login")
 
-    http_referer = request.headers.get("referer")
+    logger.info(f"{context.rid_get()} cluster '{cluster_id}' query '{query}' try")
+
+    machines_list = []
+    query_code = 0
+    query_result = ""
+    query_seconds = 0
+
+    user = services.users.get_by_id(db_session=db_session, id=user_id)
 
     try:
-        cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_id)
+        if cluster_id == "all":
+            cluster = models.Cluster(id=0, name="all")
+            clusters_result = services.clusters.list(db_session=db_session, query=query, offset=0, limit=20)
+            clusters_list = clusters_result.objects
+            app_name = "Machines"
+            query_search = 1
+        else:
+            cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_id)
+            clusters_list = [cluster]
+            app_name = "Cluster Machines"
+            query_search = 0
 
-        list_result = services.machines.list(cluster=cluster)
-        machines_map = list_result.objects_map
-        machine = machines_map.get(machine_name)
+        for cluster_ in clusters_list:
+            list_result = services.machines.list(cluster=cluster_)
+            machines_list.extend(list_result.objects_list)
+            query_seconds += list_result.seconds
 
-        if not machine:
-            return fastapi.responses.RedirectResponse(http_referer)
-        
-        cluster.size_ask -= 1
-        db_session.add(cluster)
-        db_session.commit()
+        query_result = f"query '{query}' returned {len(machines_list)} results in {query_seconds}s"
 
-        services.hetzner.servers.delete(id=machine.id)
-
-        cluster.size_has -= 1
-        db_session.add(cluster)
-        db_session.commit()
-
-        logger.info(f"{context.rid_get()} cluster '{cluster}' machine '{machine_name}' delete ok")
+        logger.info(f"{context.rid_get()} cluster '{cluster_id}' ok")
     except Exception as e:
-        logger.error(f"{context.rid_get()} cluster '{cluster}' machine '{machine_name}' delete exception '{e}'")
+        query_code = 500
+        logger.error(f"{context.rid_get()} clusters '{cluster_id}' exception '{e}'")
 
-    return fastapi.responses.RedirectResponse(http_referer)
+    if "HX-Request" in request.headers:
+        template = "machines/list_table.html"
+    else:
+        template = "machines/list.html"
+
+    try:
+        response = templates.TemplateResponse(
+            request,
+            template,
+            {
+                "app_name": app_name,
+                "cluster": cluster,
+                "machines_list": machines_list,
+                "prompt_text": "search - e.g. cluster:foo",
+                "query": query,
+                "query_code": query_code,
+                "query_result": query_result,
+                "query_search": query_search,
+                "user": user,
+            }
+        )
+    except Exception as e:
+        logger.error(f"{context.rid_get()} clusters '{cluster_id}' render exception '{e}'")
+        return templates.TemplateResponse(request, "500.html", {})
+    
+    return response
+

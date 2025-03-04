@@ -43,7 +43,8 @@ def cli():
 def signal_handler(signum, frame):
     global shutdown
     shutdown = True
-    logger.info("[workq-worker] signal handler ... preparing to shutdown")
+    worker_id = worker_me.get("worker_id")
+    logger.info(f"[workq-worker] {worker_id} signal handler ... preparing to shutdown")
 
 
 @click.command()
@@ -54,6 +55,15 @@ def signal_handler(signum, frame):
 @click.option('--subject', default="workers", required=False, help="nats subject name")
 @coro
 async def run(db_uri: str, queue: str, interval: int, id: str, subject: str) -> dict:
+    """
+    The worker is responsible for processing incoming messages on the specified nats queue group.
+
+    Exception conditions:
+
+    Its possible that a shutdown message is received while processing a message.  In those cases, it depends on the shutdown timeout
+    policy of the docker environment that determines what happens.  The current policy is to wait 10-30 seconds and then kill the 
+    process.  This means jobs can be partially completed and its therefore important for jobs to be idempotent.
+    """
     global shutdown
 
     db_uri = db_uri or os.environ.get("DATABASE_URL")
@@ -63,6 +73,7 @@ async def run(db_uri: str, queue: str, interval: int, id: str, subject: str) -> 
 
     # install signal handler
     signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     if not services.workq.route(queue=queue):
         logger.error(f"[workq-worker] queue '{queue}' handler required")

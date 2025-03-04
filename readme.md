@@ -33,6 +33,12 @@ Define your environment in .env, and then start the dev server:
 make dev
 ```
 
+#### Distributed Queues
+
+I have encountered the following problem a few times - you have a very dynamic workload that varies greatly during the day and want distributed queues to handle those peak workloads efficiently.  Kubernetes and Kafka are really incredible tools and I have used them often.  I have also seen some pretty decent size cloud bills.  
+
+This distributed queue solution uses lower cost vps providers (e.g. Hetzner), Nats (a wonderful networking library), and Postgres queues to implement a solution that can distribute workloads across multiple machines and auto scale those machines as necessary.
+
 #### Password Manager
 
 The password interface uses the [pass](https://www.passwordstore.org/) tool to store passwords in gpg encrypted files.  The password user interface enables creating new passwords and showing existing passwords:

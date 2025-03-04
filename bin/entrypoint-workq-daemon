@@ -1,3 +1,4 @@
 #!/bin/bash
 
-source .venv/bin/activate && ./bin/workq-daemon run --queue work
+source .venv/bin/activate
+exec ./bin/workq-daemon run --queue work

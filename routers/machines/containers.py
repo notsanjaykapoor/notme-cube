@@ -51,12 +51,12 @@ def machines_containers_list(
             return fastapi.responses.RedirectResponse("/machines")
 
         check_result = services.machines.containers.check(machine=machine)
-        containers_list = check_result.containers_missing + check_result.containers_running
+        containers_list = check_result.containers_running + check_result.containers_missing
 
         if check_result.containers_status == 0:
             logger.info(f"{context.rid_get()} cluster '{cluster_id}' machine '{machine_name}' containers list ok")
         else:
-            logger.error(f"{context.rid_get()} cluster '{cluster_id}' machine '{machine_name}' containers list error '{check_result.containers_status}")
+            logger.error(f"{context.rid_get()} cluster '{cluster_id}' machine '{machine_name}' containers list error {check_result.containers_status}")
     except Exception as e:
         logger.error(f"{context.rid_get()} cluster '{cluster_id}' machines containers list exception '{e}'")
 

@@ -48,3 +48,7 @@ class Machine:
     @property
     def services(self) -> str:
         return self.tags.get("services") or ""
+
+    @property
+    def services_list(self) -> list[str]:
+        return [s for s in self.services.split(",") if s]

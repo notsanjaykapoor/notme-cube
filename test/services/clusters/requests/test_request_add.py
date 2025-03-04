@@ -59,7 +59,7 @@ def test_request_add(db_session: sqlmodel.Session, cluster_1: models.Cluster):
 
     # get pending request
 
-    get_result = services.clusters.requests.get_pending_by_cluster_id(
+    get_result = services.clusters.requests.get_pending_by_cluster(
         db_session=db_session,
         cluster_id=cluster_1.id,
     )

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 import functools
-import json
 import os
 import signal
 import sys
+import time
 
 sys.path.append(".")
 
@@ -19,6 +19,8 @@ import models
 import services.clusters.requests
 import services.database
 import services.hetzner.servers
+import services.machines
+import services.machines.containers
 import services.workers
 
 logger = log.init("api")
@@ -48,10 +50,12 @@ def signal_handler(signum, frame):
 
 
 @click.command()
+@click.option('--name', default=None, required=True, help="cluster name to monitor and scale")
 @click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
-@click.option('--interval', default=3, required=False, help="")
+@click.option('--request-interval', default=3, required=False, help="seconds interval to check cluster requests")
+@click.option('--health-interval', default=30, required=False, help="seconds interval to check cluster health")
 @coro
-async def run(db_uri: str, interval: int) -> dict:
+async def run(name: str, db_uri: str, request_interval: int, health_interval: int) -> dict:
     """
     The scaler is responsible for listening for incoming cluster requests and managing cluster machine size based on those requests.
 
@@ -68,44 +72,89 @@ async def run(db_uri: str, interval: int) -> dict:
 
     # install signal handler
     signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
-    logger.info("[workq-scaler] starting")
+    health_unix_t1 = int(time.time())
+    health_unix_t2 = health_unix_t1
 
     with services.database.session.get() as db_session:
-        requests = services.clusters.requests.get_processing_all(db_session=db_session)
+        cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=name)
+
+        if not cluster:
+            raise ValueError(f"cluster '{name}' is invalid")
+
+        logger.info(f"[workq-scaler] cluster '{cluster.name}' starting")
+
+        requests = services.clusters.requests.get_processing_by_cluster(db_session=db_session, cluster_id=cluster.id)
 
         if requests:
-            _startup_recovery(db_session=db_session, requests=requests)
+            _cluster_recovery(db_session=db_session, cluster=cluster, requests=requests)
 
     while not shutdown:
+        # use a new db session on each loop to make sure we don't get stale db data
         with services.database.session.get() as db_session:
-            request = services.clusters.requests.get_pending_any(db_session=db_session)
+            cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=name)
+            request = services.clusters.requests.get_pending_by_cluster(db_session=db_session, cluster_id=cluster.id)
 
             if request:
-                cluster = services.clusters.get_by_id(
-                    db_session=db_session,
-                    id=request.cluster_id,
-                )
-
                 logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has}")
 
                 services.clusters.requests.process(
                     db_session=db_session,
                     request=request,
                 )
-            else:
-                await asyncio.sleep(interval)
+
+                cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=name)
+                request = services.clusters.requests.get_by_id(db_session=db_session, id=request.id)
+
+                if request.state == models.cluster_request.STATE_COMPLETED:
+                    logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has}")
+
+            # sleep whether or not we processed a request
+
+            await asyncio.sleep(request_interval)
+
+            # cluster health check
+
+            health_unix_t2 = int(time.time())
+
+            if (health_unix_t2 - health_unix_t1) >= health_interval:
+                _cluster_health(db_session=db_session, cluster=cluster)
+                health_unix_t1 = int(time.time())
+
+            # if not request:
+            #     await asyncio.sleep(request_interval)
 
     logger.info("[workq-scaler] exiting")
 
 
-def _startup_recovery(db_session: sqlmodel.Session, requests: list[models.ClusterRequest]) -> int:
-    for request in requests:
-        cluster = services.clusters.get_by_id(
-            db_session=db_session,
-            id=request.cluster_id,
-        )
+def _cluster_health(db_session: sqlmodel.Session, cluster: models.Cluster) -> int:
+    list_result = services.machines.list(cluster=cluster)
 
+    for machine in list_result.objects_list:
+        logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' containers check")
+
+        check_result = services.machines.containers.check(machine=machine)
+        containers_down = check_result.containers_missing
+
+        if containers_down:
+            logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' containers down {len(containers_down)}")
+        else:
+            logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' containers ok")
+
+        for container in containers_down:
+            start_result = services.machines.containers.start(machine=machine, service=container.name)
+
+            if start_result.code == 0:
+                logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' container '{container.name}' up")
+            else:
+                logger.error(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' container '{container.name}' exception")
+
+    return 0
+                      
+
+def _cluster_recovery(db_session: sqlmodel.Session, cluster: models.Cluster, requests: list[models.ClusterRequest]) -> int:
+    for request in requests:
         logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery try")
 
         servers_struct = services.hetzner.servers.list(query=f"cluster:{cluster.name}")
@@ -120,7 +169,9 @@ def _startup_recovery(db_session: sqlmodel.Session, requests: list[models.Cluste
             db_session.add(cluster)
             db_session.commit()
 
-            logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery changes")
+            logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery with changes")
+        else:
+            logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery with no changes")
 
     return 0
 

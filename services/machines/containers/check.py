@@ -45,7 +45,7 @@ def check(machine: models.Machine) -> Struct:
         return struct
 
     for container in struct.containers_missing:
-        struct.errors.append(f"container '{container.name}' not running")
+        struct.errors.append(f"container '{container.name}' down")
         struct.containers_status = 404
 
     return struct
@@ -62,7 +62,7 @@ def _containers_build(services: list[str]) -> list[models.Container]:
             id="",
             image="",
             name=service,
-            state=models.container.STATE_MISSING,
+            state=models.container.STATE_DOWN,
         )
         containers.append(container)
 

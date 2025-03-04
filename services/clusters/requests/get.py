@@ -5,6 +5,15 @@ import sqlmodel
 import models
 
 
+def get_by_id(db_session: sqlmodel.Session, id: int) -> typing.Optional[models.ClusterRequest]:
+    db_select = sqlmodel.select(models.ClusterRequest).where(
+        models.ClusterRequest.id == id,
+    )
+    db_object = db_session.exec(db_select).first()
+
+    return db_object
+
+
 def get_pending_any(db_session: sqlmodel.Session) -> typing.Optional[models.ClusterRequest]:
     db_select = sqlmodel.select(models.ClusterRequest).where(
         models.ClusterRequest.state.in_(models.cluster_request.STATES_PENDING),
@@ -14,7 +23,7 @@ def get_pending_any(db_session: sqlmodel.Session) -> typing.Optional[models.Clus
     return db_object
 
 
-def get_pending_by_cluster_id(db_session: sqlmodel.Session, cluster_id: int) -> typing.Optional[models.ClusterRequest]:
+def get_pending_by_cluster(db_session: sqlmodel.Session, cluster_id: int) -> typing.Optional[models.ClusterRequest]:
     db_select = sqlmodel.select(models.ClusterRequest).where(
         models.ClusterRequest.state.in_(models.cluster_request.STATES_PENDING),
     ).where(
@@ -29,4 +38,14 @@ def get_processing_all(db_session: sqlmodel.Session) -> list[models.ClusterReque
     db_select = sqlmodel.select(models.ClusterRequest).where(
         models.ClusterRequest.state == models.cluster_request.STATE_PROCESSING,
     )
+    return db_session.exec(db_select).all()
+
+
+def get_processing_by_cluster(db_session: sqlmodel.Session, cluster_id: int) -> list[models.ClusterRequest]:
+    db_select = sqlmodel.select(models.ClusterRequest).where(
+        models.ClusterRequest.state == models.cluster_request.STATE_PROCESSING,
+    ).where(
+        models.ClusterRequest.cluster_id == cluster_id
+    )
+
     return db_session.exec(db_select).all()

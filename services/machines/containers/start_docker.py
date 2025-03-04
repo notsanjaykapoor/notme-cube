@@ -40,7 +40,7 @@ def start_docker(machine: models.Machine) -> Struct:
             id="",
             image="",
             name=models.service.SERVICE_DOCKER,
-            state=models.container.STATE_RUNNING,
+            state=models.container.STATE_UP,
         )
 
     struct.seconds = round(time.time() - t1, 2)

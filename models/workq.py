@@ -9,7 +9,7 @@ import sqlmodel
 MSG_SHUTDOWN = "shutdown"
 MSG_SLEEP = "sleep"
 
-QUEUE_WORK = "work"
+QUEUE_WORK = "workq"
 
 STATE_COMPLETED = "completed"
 STATE_ERROR = "error"

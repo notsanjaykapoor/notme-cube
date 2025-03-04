@@ -50,15 +50,14 @@ def list(machine: models.Machine, query: str) -> Struct:
         id="",
         image="",
         name="docker",
-        state=models.container.STATE_RUNNING,
+        state=models.container.STATE_UP,
     )
-    # struct.objects_map[container.name] = container
     struct.objects_list.append(container)
 
     # add running containers to list
 
     struct.objects_list.extend(
-        _docker_ps_parse(docker_ps=result, query=query, state=models.container.STATE_RUNNING)
+        _docker_ps_parse(docker_ps=result, query=query, state=models.container.STATE_UP)
     )
 
     # add exited containers to list

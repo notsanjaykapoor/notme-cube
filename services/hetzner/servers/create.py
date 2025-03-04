@@ -9,11 +9,13 @@ import hcloud.server_types
 import hcloud.ssh_keys
 
 import models
+import services.hetzner.servers
 
 
 @dataclasses.dataclass
 class Struct:
     code: int
+    machine: models.Machine
     seconds: int
     server: dict
     errors: list[str]
@@ -25,6 +27,7 @@ def create(cluster: models.Cluster, name: str, ssh_key: str, tags: dict) -> Stru
     """
     struct = Struct(
         code=0,
+        machine=None,
         seconds=0,
         server={},
         errors=[],
@@ -49,6 +52,7 @@ def create(cluster: models.Cluster, name: str, ssh_key: str, tags: dict) -> Stru
         response.action.wait_until_finished()
 
         struct.server = response.server
+        struct.machine = services.hetzner.servers.machine_from_server(server=struct.server)
     except Exception as e:
         struct.code = 500
         struct.errors.append(e.message)

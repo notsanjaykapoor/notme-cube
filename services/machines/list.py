@@ -21,7 +21,7 @@ class Struct:
 
 def list(cluster: models.Cluster) -> Struct:
     if not cluster:
-        raise ValueError(f"cluster invalid")
+        raise ValueError("cluster invalid")
 
     if cluster.cloud == models.machine.CLOUD_GCP:
         result = _list_gcp(query="")

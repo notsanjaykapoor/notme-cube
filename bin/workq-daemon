@@ -68,6 +68,7 @@ async def run(db_uri: str, queue: str, interval: int, subject: str) -> dict:
 
     # install signal handler
     signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     logger.info(f"[workq-daemon] starting")
 

@@ -1,5 +1,4 @@
 import dataclasses
-import time
 
 import models
 import services.scp
@@ -75,7 +74,7 @@ def start_service(machine: models.Machine, service: str) -> Struct:
         id="",
         image=docker_image,
         name=service,
-        state=models.container.STATE_RUNNING,
+        state=models.container.STATE_UP,
     )
 
     return struct

@@ -1,8 +1,8 @@
 import dataclasses
 
+STATE_DOWN = "down"
 STATE_EXITED = "exited"
-STATE_MISSING = "missing"
-STATE_RUNNING = "running"
+STATE_UP = "up"
 
 @dataclasses.dataclass
 class Container:

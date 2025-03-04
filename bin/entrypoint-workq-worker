@@ -1,3 +1,4 @@
 #!/bin/bash
 
-source .venv/bin/activate && ./bin/workq-worker run --queue work
+source .venv/bin/activate
+exec ./bin/workq-worker run --queue workq

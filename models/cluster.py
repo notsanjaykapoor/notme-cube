@@ -52,6 +52,11 @@ class Cluster(sqlmodel.SQLModel, table=True):
         return int(self.data.get("protected") or 0)
 
     @property
+    def queue(self) -> str:
+        # returns queue cluster monitors, if there is one
+        return self.data.get("queue") or ""
+
+    @property
     def server_image(self) -> str:
         return self.data.get("server_image") or ""
 
@@ -66,3 +71,7 @@ class Cluster(sqlmodel.SQLModel, table=True):
     @property
     def services(self) -> str:
         return self.data.get("services") or ""
+
+    @property
+    def services_list(self) -> list[str]:
+        return [s for s in self.services.split(",") if s]
