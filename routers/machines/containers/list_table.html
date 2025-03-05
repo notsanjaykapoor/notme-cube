@@ -10,39 +10,46 @@
     </thead>
     <tbody>
         {% for container in containers_list %}
-            {% if container.state == "up" %}
-                {% set state_color = "text-sky-400" %}
-            {% else %}
-                {% set state_color = "text-amber-500" %}
-            {% endif %}
+        {% if container.state == "up" %}
+        {% set state_color = "text-sky-400" %}
+        {% else %}
+        {% set state_color = "text-amber-400" %}
+        {% endif %}
 
-            <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
-                <td class="p-4 font-normal">
-                    {{ container.name }}
-                </td>
-                <td class="p-4 font-normal">
-                    {{ container.image }}
-                </td>
-                <td class="p-4 font-bold {{state_color}}">{{ container.state }}</td>
-                <td class="p-4 font-normal opacity-30">ssh {{ machine.user }}@{{ machine.ip }}</td>
-                <td class="p-4 pr-0 font-normal">
-                    {% if container.state == "down" %}
-                        <a href="/machines/{{machine.name}}/containers/start?service={{container.name}}" class="flex justify-center items-center" title="start container">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-blue-700">
-                                <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H3.989a.75.75 0 0 0-.75.75v4.242a.75.75 0 0 0 1.5 0v-2.43l.31.31a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm1.23-3.723a.75.75 0 0 0 .219-.53V2.929a.75.75 0 0 0-1.5 0V5.36l-.31-.31A7 7 0 0 0 3.239 8.188a.75.75 0 1 0 1.448.389A5.5 5.5 0 0 1 13.89 6.11l.311.31h-2.432a.75.75 0 0 0 0 1.5h4.243a.75.75 0 0 0 .53-.219Z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    {% endif %}
+        <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
+            <td class="p-4 font-normal">
+                {{ container.name }}
+            </td>
+            <td class="p-4 font-normal">
+                {{ container.image }}
+            </td>
+            <td class="p-4 font-bold {{state_color}}">{{ container.state }}</td>
+            <td class="p-4 font-normal opacity-30">ssh {{ machine.user }}@{{ machine.ip }}</td>
+            <td class="p-4 pr-0 font-normal">
+                {% if container.state == "down" %}
+                <a href="/machines/{{machine.name}}/containers/start?service={{container.name}}"
+                    class="flex justify-center items-center" title="start container">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                        class="size-4 text-blue-700">
+                        <path fill-rule="evenodd"
+                            d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H3.989a.75.75 0 0 0-.75.75v4.242a.75.75 0 0 0 1.5 0v-2.43l.31.31a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm1.23-3.723a.75.75 0 0 0 .219-.53V2.929a.75.75 0 0 0-1.5 0V5.36l-.31-.31A7 7 0 0 0 3.239 8.188a.75.75 0 1 0 1.448.389A5.5 5.5 0 0 1 13.89 6.11l.311.31h-2.432a.75.75 0 0 0 0 1.5h4.243a.75.75 0 0 0 .53-.219Z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </a>
+                {% endif %}
 
-                    {% if container.state == "exited" %}
-                        <a href="/machines/{{machine.name}}/containers/remove?service={{container.name}}" class="flex justify-center items-center" title="remove container">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-blue-700">
-                                <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                              </svg>
-                        </a>
-                    {% endif %}
-                </td>
-            </tr>
+                {% if container.state == "exited" %}
+                <a href="/machines/{{machine.name}}/containers/remove?service={{container.name}}"
+                    class="flex justify-center items-center" title="remove container">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                        class="size-4 text-red-600">
+                        <path
+                            d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                    </svg>
+                </a>
+                {% endif %}
+            </td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
