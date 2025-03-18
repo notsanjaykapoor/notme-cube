@@ -50,15 +50,6 @@ As a machine comes up, it joins the work group dynamically and is available to p
 ![Work Queue Example](https://ik.imagekit.io/notme001/readme/notme_cluster_workq_1.png "work queue example")
 
 
-#### Password Manager
-
-The password interface uses the [pass](https://www.passwordstore.org/) tool to store passwords in gpg encrypted files.  The password user interface enables creating new passwords and showing existing passwords:
-
-![Password List Example](https://ik.imagekit.io/notme001/readme/passw_list_example.png "passw list example")
-
-![Password Show Example](https://ik.imagekit.io/notme001/readme/passw_show_example.png "passw show example")
-
-
 #### Build
 
 Build docker image:

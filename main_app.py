@@ -20,8 +20,6 @@ import routers.auth.logout
 import routers.clusters.clusters
 import routers.machines.containers
 import routers.machines.machines
-import routers.passw.passw_list
-import routers.passw.passw_manage
 import routers.workers.workers
 import routers.workq.workq
 import services.database
@@ -53,8 +51,6 @@ app.include_router(routers.auth.logout.app)
 app.include_router(routers.clusters.clusters.app)
 app.include_router(routers.machines.containers.app)
 app.include_router(routers.machines.machines.app)
-app.include_router(routers.passw.passw_list.app)
-app.include_router(routers.passw.passw_manage.app)
 app.include_router(routers.workers.workers.app)
 app.include_router(routers.workq.workq.app)
 

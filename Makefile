@@ -12,11 +12,8 @@ build:
 deploy:
 	./scripts/vps/vps-utils deploy --host 5.161.208.47 --user root
 
-dev: docker
+dev:
 	. $(VENV)/bin/activate && ./bin/app-server --port 9003
-
-docker:
-	docker compose -f docker/docker-compose.yml up -d --no-recreate nats
 
 install: pyproject.toml
 	uv sync

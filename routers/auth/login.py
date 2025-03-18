@@ -52,11 +52,12 @@ def users_login(
         return fastapi.responses.RedirectResponse("/")
 
     if user_email:
+        # should be an htmx request
         user = services.users.get_by_email(db_session=db_session, email=user_email)
 
         if not user:
             logger.info(f"{context.rid_get()} users login '{user_email}' email invalid")
-            return templates.TemplateResponse(
+            response = templates.TemplateResponse(
                 request,
                 "auth/login_error.html",
                 {
@@ -64,10 +65,11 @@ def users_login(
                     "login_message": "invalid email",
                 },
             )
+            return response
 
         if user.idp == models.user.IDP_GOOGLE:
             response = templates.TemplateResponse(request, "/auth/login_ok.html")
-            response.headers["HX-Redirect"] = "/login/oauth"
+            response.headers["HX-Redirect"] = "/login/oauth" # for htmx request
             return response
 
     if user_pass:
