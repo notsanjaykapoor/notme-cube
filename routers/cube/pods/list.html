@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="flex flex-col mx-auto mt-10">
+    <h3 class="mx-auto font-bold">
+        {{ app_name }}
+    </h3>
+    <div class="mt-2 mx-auto text-xs text-zinc-400">
+        @{{ app_version }}
+    </div>
+</div>
+
+<div class="flex justify-between mt-10 xs:w-full sm:w-11/12">
+    <div class="flex sm:mx-20 xs:mx-5 text-xs text-zinc-400">
+        cube
+        &nbsp;
+        /&nbsp;
+        <a href="/cube/projects" class="text-blue-700 font-bold">
+            projects
+        </a>
+        &nbsp;
+        /&nbsp;
+        {{ project.name }}
+        &nbsp;
+        /&nbsp;
+        pods
+    </div>
+</div>
+
+
+<div class="flex flex-col mt-5" id="cube-pods-table">
+    {% include "cube/pods/list_table.html" %}
+</div>
+
+{% endblock %}

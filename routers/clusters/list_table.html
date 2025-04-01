@@ -1,11 +1,11 @@
 <div class="mt-0 sm:mx-20 xs:mx-5">
     {% if query_code == 0 %}
-        <p class="text-xs font-bold text-black-700 py-2">{{query_result}}</p>
+    <p class="text-xs font-bold text-black-700 py-2">{{query_result}}</p>
     {% else %}
-        <p class="text-xs font-bold text-red-700 py-2">{{query_result}}</p>
+    <p class="text-xs font-bold text-red-700 py-2">{{query_result}}</p>
     {% endif %}
 </div>
-  
+
 <table class="mt-5 sm:mx-20 xs:mx-5 xs:w-full sm:w-10/12" id="clusters-table">
     <thead class="font-normal text-center text-xs leading-6 text-zinc-800">
         <tr>
@@ -24,65 +24,76 @@
     </thead>
     <tbody>
         {% for cluster in clusters_list %}
-            {% if cluster.state == "running" %}
-                {% set cluster_color = "text-sky-400" %}
-            {% else %}
-                {% set cluster_color = "text-red-700" %}
-            {% endif %}
+        {% if cluster.state == "running" %}
+        {% set cluster_color = "text-sky-400" %}
+        {% else %}
+        {% set cluster_color = "text-red-700" %}
+        {% endif %}
 
-            <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
-                <td class="p-4 font-normal">
-                    <a href="/clusters/{{cluster.name}}/machines" class="text-blue-700 font-bold">
-                        {{ cluster.name }}
-                    </a>
-                </td>
-                <td class="p-4 font-normal">{{ cluster.cloud }}</td>
-                <td class="p-4 font-normal">{{ cluster.protected }}</td>
-                <td class="p-4 font-normal">{{ cluster.services }}</td>
-                <td class="p-4 font-normal">{{ cluster.queue }}</td>
-                <td class="p-4 font-bold {{cluster_color}}">
-                    {% if cluster.protected == 0 and cluster.state == "running" and cluster.size_has > 0 %}
-                        <span class="float-left mx-auto">
-                            <a href="/clusters/{{cluster.name}}/scale?ask=-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="font-bold text-red-700 size-4">
-                                    <path fill-rule="evenodd" d="M4 10a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H4.75A.75.75 0 0 1 4 10Z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        </span>
-                    {% endif %}
-
-                    {{ cluster.size_ask }}
-
-                    {% if cluster.protected == 0 and cluster.state == "running" %}
-                        <span class="float-right mx-auto">
-                            <a href="/clusters/{{cluster.name}}/scale?ask=1">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="font-bold text-blue-700 size-4">
-                                    <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                                </svg>
-                            </a>
-                        </span>
-                    {% endif %}
-                </td>
-                <td class="p-4 font-bold {{cluster_color}}">{{ cluster.size_has }}</td>
-                <td class="p-4 font-bold {{cluster_color}}">{{ cluster.state }}</td>
-                <td class="p-4 font-normal">{{ cluster.id }}</td>
-                <td class="p-4 font-normal">
-                    <a href="/clusters/{{cluster.name}}/requests" class="flex justify-center items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-blue-600">
-                            <path fill-rule="evenodd" d="M7.84 1.804A1 1 0 0 1 8.82 1h2.36a1 1 0 0 1 .98.804l.331 1.652a6.993 6.993 0 0 1 1.929 1.115l1.598-.54a1 1 0 0 1 1.186.447l1.18 2.044a1 1 0 0 1-.205 1.251l-1.267 1.113a7.047 7.047 0 0 1 0 2.228l1.267 1.113a1 1 0 0 1 .206 1.25l-1.18 2.045a1 1 0 0 1-1.187.447l-1.598-.54a6.993 6.993 0 0 1-1.929 1.115l-.33 1.652a1 1 0 0 1-.98.804H8.82a1 1 0 0 1-.98-.804l-.331-1.652a6.993 6.993 0 0 1-1.929-1.115l-1.598.54a1 1 0 0 1-1.186-.447l-1.18-2.044a1 1 0 0 1 .205-1.251l1.267-1.114a7.05 7.05 0 0 1 0-2.227L1.821 7.773a1 1 0 0 1-.206-1.25l1.18-2.045a1 1 0 0 1 1.187-.447l1.598.54A6.992 6.992 0 0 1 7.51 3.456l.33-1.652ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd" />
+        <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
+            <td class="p-4 font-normal">
+                <a href="/clusters/{{cluster.name}}/machines" class="text-blue-700 font-bold">
+                    {{ cluster.name }}
+                </a>
+            </td>
+            <td class="p-4 font-normal">{{ cluster.cloud }}</td>
+            <td class="p-4 font-normal">{{ cluster.protected }}</td>
+            <td class="p-4 font-normal">{{ cluster.services }}</td>
+            <td class="p-4 font-normal">{{ cluster.queue }}</td>
+            <td class="p-4 font-bold {{cluster_color}}">
+                {% if cluster.protected == 0 and cluster.state == "running" and cluster.size_has > 0 %}
+                <span class="float-left mx-auto">
+                    <a href="/clusters/{{cluster.name}}/scale?ask=-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            class="font-bold text-red-700 size-4">
+                            <path fill-rule="evenodd"
+                                d="M4 10a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H4.75A.75.75 0 0 1 4 10Z"
+                                clip-rule="evenodd" />
                         </svg>
                     </a>
-                </td>
-                <td class="p-4 font-normal">
-                    {% if cluster.deletable == 1 %}
-                        <a href="/clusters/{{cluster.name}}/delete" class="flex justify-center items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-red-600">
-                                <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                            </svg>
-                        </a>
-                    {% endif %}
-                </td>
-            </tr>
+                </span>
+                {% endif %}
+
+                {{ cluster.size_ask }}
+
+                {% if cluster.protected == 0 and cluster.state == "running" %}
+                <span class="float-right mx-auto">
+                    <a href="/clusters/{{cluster.name}}/scale?ask=1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            class="font-bold text-blue-700 size-4">
+                            <path
+                                d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                        </svg>
+                    </a>
+                </span>
+                {% endif %}
+            </td>
+            <td class="p-4 font-bold {{cluster_color}}">{{ cluster.size_has }}</td>
+            <td class="p-4 font-bold {{cluster_color}}">{{ cluster.state }}</td>
+            <td class="p-4 font-normal">{{ cluster.id }}</td>
+            <td class="p-4 font-normal">
+                <a href="/clusters/{{cluster.name}}/requests" class="flex justify-center items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                        class="size-4 text-blue-600">
+                        <path fill-rule="evenodd"
+                            d="M7.84 1.804A1 1 0 0 1 8.82 1h2.36a1 1 0 0 1 .98.804l.331 1.652a6.993 6.993 0 0 1 1.929 1.115l1.598-.54a1 1 0 0 1 1.186.447l1.18 2.044a1 1 0 0 1-.205 1.251l-1.267 1.113a7.047 7.047 0 0 1 0 2.228l1.267 1.113a1 1 0 0 1 .206 1.25l-1.18 2.045a1 1 0 0 1-1.187.447l-1.598-.54a6.993 6.993 0 0 1-1.929 1.115l-.33 1.652a1 1 0 0 1-.98.804H8.82a1 1 0 0 1-.98-.804l-.331-1.652a6.993 6.993 0 0 1-1.929-1.115l-1.598.54a1 1 0 0 1-1.186-.447l-1.18-2.044a1 1 0 0 1 .205-1.251l1.267-1.114a7.05 7.05 0 0 1 0-2.227L1.821 7.773a1 1 0 0 1-.206-1.25l1.18-2.045a1 1 0 0 1 1.187-.447l1.598.54A6.992 6.992 0 0 1 7.51 3.456l.33-1.652ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </a>
+            </td>
+            <td class="p-4 font-normal">
+                {% if cluster.deletable == 1 %}
+                <a href="/clusters/{{cluster.name}}/delete" class="flex justify-center items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                        class="size-4 text-pink-500">
+                        <path fill-rule="evenodd"
+                            d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </a>
+                {% endif %}
+            </td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>

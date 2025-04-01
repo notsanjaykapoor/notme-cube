@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+sys.path.insert(1, os.path.join(sys.path[0], ".."))
+
+import dot_init
+
+import click
+
+import services.cf
+import services.database.session
+
+
+@click.group()
+def cli():
+    pass
+
+
+@click.command()
+@click.option("--name", default=None, required=True, help="tunnel name")
+def tunnel_delete(name: str) -> list[str]:
+    """
+    Delete cloudflare tunnel
+    """
+    client = services.cf.client()
+
+    tunnels = client.zero_trust.tunnels.list(
+        account_id=services.cf.account_id(),
+        is_deleted=False,
+    )
+
+    for tunnel in tunnels.result:
+        if tunnel.name != name:
+            continue
+
+        print(tunnel) # xxx
+
+        delete_result = client.zero_trust.tunnels.cloudflared.delete(
+            tunnel_id=tunnel.id,
+            account_id=services.cf.account_id(),
+        )
+
+
+@click.command()
+def tunnels_list() -> list[str]:
+    """
+    List cloudflare tunnels
+    """
+    client = services.cf.client()
+
+    tunnels = client.zero_trust.tunnels.list(
+        account_id=services.cf.account_id(),
+        is_deleted=False,
+    )
+
+    for index, tunnel in enumerate(tunnels.result):
+        _print_status(f"tunnel {index+1} - name '{tunnel.name}', type '{tunnel.tun_type}'")
+        print(tunnel)
+
+        config = client.zero_trust.tunnels.cloudflared.configurations.get(
+            tunnel_id=tunnel.id,
+            account_id=services.cf.account_id(),
+        )
+
+        breakpoint() #
+
+        print(config)
+
+
+def _print_error(s: str):
+    print("\x1b[1;31m" + s + "\x1b[0m")
+
+
+def _print_ok(s: str):
+    print("\x1b[1;32m" + s + "\x1b[0m")
+
+
+def _print_status(s: str):
+    print("\x1b[1;33m" + s + "\x1b[0m")
+
+
+cli.add_command(tunnel_delete)
+cli.add_command(tunnels_list)
+
+
+if __name__ == "__main__":
+    cli()

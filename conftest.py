@@ -12,8 +12,9 @@ import services.clusters
 import services.database
 import services.users
 
-# set app env
+# set app env vars
 os.environ["APP_ENV"] = "tst"
+os.environ["CUBE_CONFIG_PATH"] = "file://localhost//Users/sanjaykapoor/notme/notme-cube/test/data/cube_config.yml"
 
 test_db_name = os.environ.get("DATABASE_TEST_URL")
 connect_args: dict = {}
@@ -88,6 +89,34 @@ def cluster_1_fixture(db_session: sqlmodel.Session):
     yield cluster
 
     services.database.truncate_tables(db_session=db_session, table_names=["clusters"])
+
+
+@pytest.fixture(name="machine_1")
+def machine_1_fixture():
+    machine = models.Machine(
+        cloud=models.machine.CLOUD_HETZNER,
+        id="id",
+        image="image",
+        ip="0.0.0.0",
+        location="location",
+        name="machine-1",
+        state=models.machine.STATE_RUNNING,
+        tags={},
+        type="type",
+        user=os.environ.get("VPS_HETZNER_USER"),
+    )
+
+    yield machine
+
+
+@pytest.fixture(name="project_1")
+def project_1_fixture():
+    project = models.CubeProject(
+        name="project-1",
+        dir="/tmp"
+    )
+
+    yield project
 
 
 @pytest.fixture(name="user_1")

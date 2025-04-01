@@ -3,14 +3,15 @@
         <tr>
             <th class="p-4">name</th>
             <th class="p-4">image</th>
+            <th class="p-4">ports</th>
             <th class="p-4">state</th>
-            <th class="p-4">ssh</th>
+            <th class="p-4">uptime</th>
             <th class="p-4"></th>
         </tr>
     </thead>
     <tbody>
         {% for container in containers_list %}
-        {% if container.state == "up" %}
+        {% if container.state == "running" %}
         {% set state_color = "text-sky-400" %}
         {% else %}
         {% set state_color = "text-amber-400" %}
@@ -23,8 +24,9 @@
             <td class="p-4 font-normal">
                 {{ container.image }}
             </td>
+            <td class="p-4 font-bold {{state_color}}">{{ container.ports }}</td>
             <td class="p-4 font-bold {{state_color}}">{{ container.state }}</td>
-            <td class="p-4 font-normal opacity-30">ssh {{ machine.user }}@{{ machine.ip }}</td>
+            <td class="p-4 font-bold {{state_color}}">{{ container.uptime }}</td>
             <td class="p-4 pr-0 font-normal">
                 {% if container.state == "down" %}
                 <a href="/machines/{{machine.name}}/containers/start?service={{container.name}}"
@@ -38,13 +40,14 @@
                 </a>
                 {% endif %}
 
-                {% if container.state == "exited" %}
+                {% if container.state in ["created", "exited"] %}
                 <a href="/machines/{{machine.name}}/containers/remove?service={{container.name}}"
-                    class="flex justify-center items-center" title="remove container">
+                    class="flex justify-center items-center mr-2" title="remove container">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                        class="size-4 text-red-600">
-                        <path
-                            d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                        class="size-4 text-pink-500">
+                        <path fill-rule="evenodd"
+                            d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+                            clip-rule="evenodd" />
                     </svg>
                 </a>
                 {% endif %}

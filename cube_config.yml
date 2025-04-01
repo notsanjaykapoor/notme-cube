@@ -1,0 +1,5 @@
+projects:
+  - name: notme-cube
+    location: file://localhost//Users/sanjaykapoor/notme/notme-cube/deploy/
+  - name: notme-me
+    location: file://localhost//Users/sanjaykapoor/notme/me/deploy/

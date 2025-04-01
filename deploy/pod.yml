@@ -1,0 +1,12 @@
+kind: pod
+metadata: # required ?
+  name: notme-cube
+spec:
+  containers: # only 1 allowed
+    - name: notme-cube-prd
+      command: make prd
+      env: .env.cube
+      image: docker.io/notsanjay/notme-cube:latest
+      network: notme # docker network
+      ports:
+        - 9003

@@ -74,7 +74,7 @@ def start_service(machine: models.Machine, service: str) -> Struct:
         id="",
         image=docker_image,
         name=service,
-        state=models.container.STATE_UP,
+        state=models.container.STATE_RUNNING,
     )
 
     return struct

@@ -3,8 +3,6 @@ import os
 import subprocess
 import time
 
-import sqlmodel
-
 import models
 import services.clusters
 import services.hetzner.servers

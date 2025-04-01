@@ -7,12 +7,18 @@ SHELL = /bin/bash
 .PHONY: build clean dev deploy docker install prd test
 
 build:
-	./scripts/vps/vps-utils build
+	./scripts/docker-utils build
 
 deploy:
 	./scripts/vps/vps-utils deploy --host 5.161.208.47 --user root
 
 dev:
+	make -j 2 dev-server dev-bot
+
+dev-bot:
+	. $(VENV)/bin/activate && ./bin/deploy-bot run
+
+dev-server:
 	. $(VENV)/bin/activate && ./bin/app-server --port 9003
 
 install: pyproject.toml

@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+
+import functools
+import os
+import signal
+import sys
+
+sys.path.append(".")
+
+import dot_init
+
+import asyncio
+import click
+
+import context
+import log
+import services.cube.deploys
+import services.database
+
+logger = log.init("api")
+
+shutdown: bool = False
+
+
+def coro(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
+
+
+@click.group()
+def cli():
+    pass
+
+
+def signal_handler(signum, frame):
+    global shutdown
+    shutdown = True
+    logger.info("deploy-bot signal handler ... preparing to shutdown")
+
+
+@click.command()
+@click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
+@coro
+async def run(db_uri):
+    """
+    The daemon is responsible for scheduling jobs and managing their state.  As jobs are added to the work queue,
+    the daemon schedules them with available workers.  Each worker registers with the daemon and maintains its status
+    with a heartbeat protocol, allowing the daemon to keep state about each of its workers.
+    """
+    db_uri = db_uri or os.environ.get("DATABASE_URL")
+
+    if not db_uri:
+        raise ValueError("db_uri is invalid or missing")
+
+    # install signal handler
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    logger.info(f"deploy-bot starting")
+
+    task_rid = "deploy-bot"
+
+    while not shutdown:
+        with services.database.session.get() as db_session:
+            list_result = services.cube.deploys.list(
+                db_session=db_session,
+                query="state:queued",
+                offset=0,
+                limit=1,
+                sort="id+"
+            )
+
+            if list_result.count == 1:
+                cube_deploy = list_result.objects[0]
+
+                # set task request id
+                context.rid_set(id=f"{task_rid}-{cube_deploy.id}")
+
+                services.cube.deploys.deploy(
+                    db_session=db_session,
+                    deploy=cube_deploy,
+                )
+
+            await asyncio.sleep(5)
+
+    logger.info(f"deploy-bot exiting")
+
+
+cli.add_command(run)
+
+if __name__ == "__main__":
+    asyncio.run(cli())

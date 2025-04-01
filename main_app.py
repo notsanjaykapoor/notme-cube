@@ -17,19 +17,25 @@ import main_shared
 import routers.auth.login
 import routers.auth.login_oauth
 import routers.auth.logout
+import routers.cube.cube_deploys
+import routers.cube.cube_ingress
+import routers.cube.cube_pods
+import routers.cube.cube_projects
+import routers.cube.cube_root
 import routers.clusters.clusters
 import routers.machines.containers
 import routers.machines.machines
 import routers.workers.workers
 import routers.workq.workq
 import services.database
+import services.cube.deploys
 import services.users
 
 logger = log.init("app")
 
 @contextlib.asynccontextmanager
 async def lifespan(app: fastapi.FastAPI):
-    logger.info("api.startup init")
+    logger.info(f"{context.rid_get()} api.startup try")
 
     if services.database.session.check() != 0:
         # create database
@@ -38,9 +44,14 @@ async def lifespan(app: fastapi.FastAPI):
     # migrate database
     services.database.session.migrate()
 
-    logger.info("api.startup completed")
+    logger.info(f"{context.rid_get()} api.startup completed")
 
     yield
+
+    logger.info(f"{context.rid_get()} api.shutdown try")
+
+    logger.info(f"{context.rid_get()} api.shutdown completed")
+
 
 # create app object
 app = fastapi.FastAPI(lifespan=lifespan)
@@ -48,6 +59,11 @@ app = fastapi.FastAPI(lifespan=lifespan)
 app.include_router(routers.auth.login.app)
 app.include_router(routers.auth.login_oauth.app)
 app.include_router(routers.auth.logout.app)
+app.include_router(routers.cube.cube_deploys.app)
+app.include_router(routers.cube.cube_ingress.app)
+app.include_router(routers.cube.cube_pods.app)
+app.include_router(routers.cube.cube_projects.app)
+app.include_router(routers.cube.cube_root.app)
 app.include_router(routers.clusters.clusters.app)
 app.include_router(routers.machines.containers.app)
 app.include_router(routers.machines.machines.app)

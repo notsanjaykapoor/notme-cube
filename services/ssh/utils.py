@@ -1,9 +1,10 @@
+import json
 import subprocess
 
 
 def exec(host: str, user: str, cmd: str) -> tuple[int, list]:
     response = subprocess.run(
-        f"ssh {user}@{host} -o StrictHostKeyChecking=accept-new -t '{cmd}'",
+        f"ssh {user}@{host} -o StrictHostKeyChecking=accept-new -t \"{cmd}\"",
         shell=True,
         capture_output=True,
     )

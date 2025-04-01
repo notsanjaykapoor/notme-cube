@@ -1,0 +1,42 @@
+<div class="flex justify-between sm:mx-20 xs:mx-5">
+    <div class="flex">
+        {% if query_code == 0 %}
+        <p class="text-xs font-bold text-black-700 py-2">{{query_result}}</p>
+        {% else %}
+        <p class="text-xs font-bold text-red-700 py-2">{{query_result}}</p>
+        {% endif %}
+    </div>
+</div>
+
+<table class="mt-10 sm:mx-20 xs:mx-5 xs:w-full sm:w-10/12" id="ingress-table">
+    <thead class="font-normal text-center text-xs leading-6 text-zinc-800">
+        <tr>
+            <th class="p-4">cluster</th>
+            <th class="p-4">project</th>
+            <th class="p-4">state</th>
+            <th class="p-4">timestamp</th>
+            <th class="p-4">id</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for deploy in deploys_list %}
+        {% set cluster_name = clusters_map.get(deploy.cluster_id) %}
+
+        <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
+            <td class="p-4 font-normal">
+                <a href="/clusters/{{cluster_name}}/machines" class="font-bold text-blue-600">
+                    {{ cluster_name }}
+                </a>
+            </td>
+            <td class="p-4 font-normal">
+                <a href="/cube/projects/{{deploy.project_name}}/pods" class="font-bold text-blue-600">
+                    {{ deploy.project_name }}
+                </a>
+            </td>
+            <td class="p-4 font-normal">{{ deploy.state }}</td>
+            <td class="p-4 font-normal">{{ deploy.created_at }}</td>
+            <td class="p-4 font-normal">{{ deploy.id }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

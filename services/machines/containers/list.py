@@ -1,4 +1,5 @@
 import dataclasses
+import json
 import time
 import typing
 
@@ -29,7 +30,7 @@ def list(machine: models.Machine, query: str) -> Struct:
 
     t1 = time.time()
 
-    cmd_running = "docker ps" # # get running containers
+    cmd_running = "docker ps -a --format '{{json .}}'"
     struct.code, result = services.ssh.exec(host=machine.ip, user=machine.user, cmd=cmd_running)
 
     if struct.code == 255:
@@ -50,23 +51,14 @@ def list(machine: models.Machine, query: str) -> Struct:
         id="",
         image="",
         name="docker",
-        state=models.container.STATE_UP,
+        state=models.container.STATE_RUNNING,
     )
     struct.objects_list.append(container)
 
     # add running containers to list
 
     struct.objects_list.extend(
-        _docker_ps_parse(docker_ps=result, query=query, state=models.container.STATE_UP)
-    )
-
-    # add exited containers to list
-
-    cmd_exited = "docker ps -a -f status=exited" # get exited containers
-    struct.code, result = services.ssh.exec(host=machine.ip, user=machine.user, cmd=cmd_exited)
-
-    struct.objects_list.extend(
-        _docker_ps_parse(docker_ps=result, query=query, state=models.container.STATE_EXITED)
+        _docker_json_parse(docker_ps=result, query=query)
     )
 
     # update objects map
@@ -77,7 +69,31 @@ def list(machine: models.Machine, query: str) -> Struct:
     return struct         
 
 
-def _docker_ps_parse(docker_ps: str, query: str, state: str) -> typing.List[str]:
+def _docker_json_parse(docker_ps: str, query: str) -> typing.List[models.Container]:
+    """
+    Parse docker ps json result into a list of containers.
+    """
+    containers = []
+
+    json_lines = [json.loads(line) for line in docker_ps.split("\r\n") if line]
+
+    for json_object in json_lines:
+        container = models.Container(
+            id=json_object.get("ID"),
+            image=json_object.get("Image"),
+            name=json_object.get("Names"),
+            networks=json_object.get("Networks"),
+            ports=json_object.get("Ports", ""),
+            state=json_object.get("State").lower(),
+            uptime=json_object.get("Status", "").lower(),
+        )
+
+        containers.append(container)
+
+    return containers
+
+
+def _docker_ps_parse(docker_ps: str, query: str, state: str) -> typing.List[models.Container]:
     """
     Parse docker ps result into a list of containers.
     """

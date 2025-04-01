@@ -55,7 +55,7 @@ def signal_handler(signum, frame):
 @click.option('--interval', default=5, required=False, help="")
 @click.option('--subject', default="workers.*", required=False, help="nats subject name")
 @coro
-async def run(db_uri: str, queue: str, interval: int, subject: str) -> dict:
+async def run(db_uri: str, queue: str, interval: int, subject: str):
     """
     The daemon is responsible for scheduling jobs and managing their state.  As jobs are added to the work queue,
     the daemon schedules them with available workers.  Each worker registers with the daemon and maintains its status

@@ -1,0 +1,31 @@
+<div class="flex justify-between sm:mx-20 xs:mx-5">
+    <div class="flex">
+        {% if query_code == 0 %}
+        <p class="text-xs font-bold text-black-700 py-2">{{query_result}}</p>
+        {% else %}
+        <p class="text-xs font-bold text-red-700 py-2">{{query_result}}</p>
+        {% endif %}
+    </div>
+</div>
+
+<table class="mt-10 sm:mx-20 xs:mx-5 xs:w-full sm:w-10/12" id="machines-table">
+    <thead class="font-normal text-center text-xs leading-6 text-zinc-800">
+        <tr>
+            <th class="p-4">name</th>
+            <th class="p-4 text-left">location</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for project in projects_list %}
+        <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
+            <td class="p-4 font-normal">
+                <a href="/cube/projects/{{project.name}}/pods" class="font-bold text-blue-600">
+                    {{ project.name }}
+                </a>
+            </td>
+            <td class="p-4 font-normal text-left">{{ project.dir }}</td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

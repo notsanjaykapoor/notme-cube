@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+sys.path.insert(1, os.path.join(sys.path[0], ".."))
+
+import dot_init
+
+import click
+
+import services.clusters
+import services.cube.deploys
+import services.cube.projects
+import services.database.session
+
+
+@click.group()
+def cli():
+    pass
+
+
+@click.command()
+@click.option("--cluster", default=None, required=True, help="cluster name")
+@click.option("--project", default=None, required=True, help="project name")
+def deploy(cluster: str, project: str) -> list[str]:
+    """
+    Deploy project to the specified cluster
+    """
+    with services.database.session.get() as db_session:
+        cluster_o = services.clusters.get_by_name(db_session=db_session, name=cluster)
+
+        projects_result = services.cube.projects.list(path=services.cube.config_path(), query=project)
+        project_o = projects_result.projects[0]
+
+        print(f"deploy create", end=" ... ", flush=True)
+
+        create_result = services.cube.deploys.create(
+            db_session=db_session,
+            cluster=cluster_o,
+            project=project_o,
+        )
+
+        _print_ok(f"ok, deploy {create_result.deploy.id}")
+
+
+def _print_error(s: str):
+    print("\x1b[1;31m" + s + "\x1b[0m")
+
+
+def _print_ok(s: str):
+    print("\x1b[1;32m" + s + "\x1b[0m")
+
+
+def _print_status(s: str):
+    print("\x1b[1;33m" + s + "\x1b[0m")
+
+
+cli.add_command(deploy)
+
+if __name__ == "__main__":
+    cli()

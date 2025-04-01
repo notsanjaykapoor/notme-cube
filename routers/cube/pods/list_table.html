@@ -1,0 +1,24 @@
+<table class="mt-10 sm:mx-20 xs:mx-5 xs:w-full sm:w-10/12" id="machines-table">
+    <thead class="font-normal text-center text-xs leading-6 text-zinc-800">
+        <tr>
+            <th class="p-4">name</th>
+            <th class="p-4">ports</th>
+            <th class="p-4">env</th>
+            <th class="p-4">network</th>
+            <th class="p-4">image</th>
+            <th class="p-4">deploy</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pod in pods_list %}
+        <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
+            <td class="p-4 font-normal">{{ pod.c_name }}</td>
+            <td class="p-4 font-normal">{{ pod.c_ports }}</td>
+            <td class="p-4 font-normal">{{ pod.c_env }}</td>
+            <td class="p-4 font-normal">{{ pod.c_network }}</td>
+            <td class="p-4 font-normal">{{ pod.c_image }}</td>
+            <td class="p-4 font-normal"></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
