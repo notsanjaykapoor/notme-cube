@@ -1,5 +1,4 @@
 import dataclasses
-import multiprocessing
 import os
 import subprocess
 
@@ -39,7 +38,7 @@ def deploy_pod(project: models.CubeProject, pod: models.CubePod, cluster: models
 
     logger.info(f"{context.rid_get()} deploy pod '{project.name}/{pod.c_name}' machine '{cluster.name}/{machine.name}' try")
 
-    struct.code, error = _machine_scp(machine=machine, pod=pod)
+    struct.code, error = _machine_scp(machine=machine, project=project, pod=pod)
 
     if struct.code != 0:
         logger.error(f"{context.rid_get()} deploy pod '{project.name}/{pod.c_name}' machine '{cluster.name}/{machine.name}' scp error {struct.code} - {error}")
@@ -109,15 +108,17 @@ def _machine_docker_stop(machine: models.Machine, pod: models.CubePod) -> tuple[
     return [0, ""]
 
 
-def _machine_scp(machine: models.Machine, pod: models.CubePod) -> tuple[int, str]:
+def _machine_scp(machine: models.Machine, project: models.CubeProject, pod: models.CubePod) -> tuple[int, str]:
     """
     Copy all required files from local machine to host machine, e.g. env files.
     """
-    if not os.path.exists(pod.c_env):
-        return 404
+    env_path = f"{project.dir}{pod.c_env}"
+
+    if not os.path.exists(env_path):
+        return [404, f"env file missing - {env_path}"]
 
     response = subprocess.run(
-        f"scp {pod.c_env} {machine.user}@{machine.ip}:",
+        f"scp {env_path} {machine.user}@{machine.ip}:",
         shell=True,
         capture_output=True,
     )

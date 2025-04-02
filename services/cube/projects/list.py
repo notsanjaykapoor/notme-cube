@@ -30,13 +30,24 @@ def list(path: str, query: str="") -> Struct:
         struct.code = 404
         return struct
 
+    query_normalized = _query_normalize(query=query)
+    query_name = ""
+
+    struct_tokens = services.mql.parse(query=query_normalized)
+
+    for token in struct_tokens.tokens:
+        value = token["value"]
+
+        if token["field"] == "name":
+            query_name = value
+
     with open(path, "r") as file:
         data = yaml.safe_load(file)
 
     for object in data.get("projects"):
         name = object.get("name")
 
-        if query and not re.search(rf"{query}", name):
+        if query_name and not re.search(rf"{query_name}", name):
             continue
 
         location = object.get("location")
@@ -52,3 +63,12 @@ def list(path: str, query: str="") -> Struct:
     struct.count = len(struct.projects)
 
     return struct
+
+
+def _query_normalize(query: str) -> str:
+    """
+    """
+    if not query or (":" in query):
+        return query
+
+    return f"name:{query.replace('~', '')}"

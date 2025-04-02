@@ -48,9 +48,13 @@ def cube_projects_list(
         query_code = 0
         query_result = f"query '{query}' returned {len(projects_list)} results"
 
+        clusters_result = services.clusters.list(db_session=db_session, query="size_has_min:1", offset=0, limit=10)
+        clusters_list = clusters_result.objects
+
         logger.info(f"{context.rid_get()} cube projects list query '{query}' ok - {len(projects_list)} projects")
     except Exception as e:
         projects_list = []
+        clusters_list = []
         query_code = 500
         query_result = ""
         logger.error(f"{context.rid_get()} cube projects list exception '{e}'")
@@ -66,6 +70,7 @@ def cube_projects_list(
             template,
             {
                 "app_name": "Cube Projects",
+                "clusters_list": clusters_list,
                 "cube_path": cube_path,
                 "projects_list": projects_list,
                 "query": query,

@@ -11,6 +11,7 @@
     </thead>
     <tbody>
         {% for container in containers_list %}
+
         {% if container.state == "running" %}
         {% set state_color = "text-sky-400" %}
         {% else %}

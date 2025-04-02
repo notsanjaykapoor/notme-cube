@@ -13,13 +13,16 @@ deploy:
 	./scripts/vps/vps-utils deploy --host 5.161.208.47 --user root
 
 dev:
-	make -j 2 dev-server dev-bot
+	supervisord -c supervisor/dev.conf
 
 dev-bot:
 	. $(VENV)/bin/activate && ./bin/deploy-bot run
 
 dev-server:
 	. $(VENV)/bin/activate && ./bin/app-server --port 9003
+
+dev-workq:
+	supervisord -c supervisor/dev.workq.conf
 
 install: pyproject.toml
 	uv sync

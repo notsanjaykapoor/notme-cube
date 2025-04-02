@@ -52,6 +52,8 @@ def list(
             dataset = dataset.where(
                 sqlalchemy.func.lower(model.name).like("%" + value_normal + "%")
             )
+        elif token["field"] in ["size_has", "size_has_min"]:
+            dataset = dataset.where(model.size_has >= int(value))
         elif token["field"] == "state":
             dataset = dataset.where(model.state == value)
 

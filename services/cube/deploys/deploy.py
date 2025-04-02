@@ -1,5 +1,4 @@
 import datetime
-import multiprocessing
 
 import sqlmodel
 
@@ -46,18 +45,25 @@ def deploy(db_session: sqlmodel.Session, deploy: models.CubeDeploy) -> int:
 
     list_result = services.cube.pods.list(projects=[project])
 
-    for pod in list_result.pods:
-        deploy_struct = services.cube.deploys.deploy_pod(
-            project=project,
-            pod=pod,
-            cluster=cluster,
-        )
+    try:
+        for pod in list_result.pods:
+            deploy_struct = services.cube.deploys.deploy_pod(
+                project=project,
+                pod=pod,
+                cluster=cluster,
+            )
 
-        if deploy_struct.code !=0:
-            pass
+            if deploy_struct.code != 0:
+                raise Exception(f"deploy pod exception {deploy_struct.code}")
 
-    deploy.deploy_at = datetime.datetime.now(datetime.timezone.utc)
-    deploy.state = models.cube_deploy.STATE_DEPLOYED
+        deploy.deploy_at = datetime.datetime.now(datetime.timezone.utc)
+        deploy.state = models.cube_deploy.STATE_DEPLOYED
+    except Exception as e:
+        deploy.data = {
+            "error": str(e),
+        }
+        deploy.state = models.cube_deploy.STATE_ERROR
+
     db_session.add(deploy)
     db_session.commit()
 

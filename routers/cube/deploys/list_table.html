@@ -20,7 +20,16 @@
     </thead>
     <tbody>
         {% for deploy in deploys_list %}
+
         {% set cluster_name = clusters_map.get(deploy.cluster_id) %}
+
+        {% if deploy.state == "deployed" %}
+        {% set state_color = "text-sky-400" %}
+        {% elif deploy.state == "error" %}
+        {% set state_color = "text-red-600" %}
+        {% else %}
+        {% set state_color = "text-zinc-600" %}
+        {% endif %}
 
         <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
             <td class="p-4 font-normal">
@@ -29,11 +38,11 @@
                 </a>
             </td>
             <td class="p-4 font-normal">
-                <a href="/cube/projects/{{deploy.project_name}}/pods" class="font-bold text-blue-600">
+                <a href="/cube/projects?query=name:{{deploy.project_name}}" class="font-bold text-blue-600">
                     {{ deploy.project_name }}
                 </a>
             </td>
-            <td class="p-4 font-normal">{{ deploy.state }}</td>
+            <td class="p-4 font-bold {{state_color}}">{{ deploy.state }}</td>
             <td class="p-4 font-normal">{{ deploy.created_at }}</td>
             <td class="p-4 font-normal">{{ deploy.id }}</td>
         </tr>

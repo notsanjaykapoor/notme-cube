@@ -10,6 +10,7 @@ import services.users
 import services.clusters
 import services.cube
 import services.cube.deploys
+import services.cube.projects
 
 
 logger = log.init("app")
@@ -23,6 +24,41 @@ app = fastapi.APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+@app.get("/cube/deploy/projects/{project_name}", response_class=fastapi.responses.HTMLResponse)
+def cube_deploys_list(
+    request: fastapi.Request,
+    project_name: str,
+    cluster_id: str,
+    user_id: int = fastapi.Depends(main_shared.get_user_id),
+    db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
+):
+    """
+    """
+    logger.info(f"{context.rid_get()} cube deploy project '{project_name}' cluster '{cluster_id}'")
+
+    if user_id == 0:
+        return fastapi.responses.RedirectResponse("/login")
+
+    cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_id)
+
+    projects_result = services.cube.projects.list(path=services.cube.config_path(), query=f"name:{project_name}")
+    project = projects_result.projects[0]
+
+    if not cluster or not project:
+        logger.error(f"{context.rid_get()} cube deploy project '{project_name}' cluster '{cluster_id}' - invalid project or cluster")
+        return fastapi.responses.RedirectResponse(request.headers.get("referer"))
+
+    create_result = services.cube.deploys.create(
+        db_session=db_session,
+        cluster=cluster,
+        project=project,
+    )
+
+    logger.info(f"{context.rid_get()} cube deploy project '{project_name}' cluster '{cluster_id}' ok - deploy id '{create_result.deploy.id}")
+
+    return fastapi.responses.RedirectResponse("/cube/deploys")
+
+
 @app.get("/cube/deploys", response_class=fastapi.responses.HTMLResponse)
 def cube_deploys_list(
     request: fastapi.Request,
@@ -32,7 +68,7 @@ def cube_deploys_list(
 ):
     """
     """
-    logger.info(f"{context.rid_get()} cube deploys")
+    logger.info(f"{context.rid_get()} cube deploys list")
 
     if user_id == 0:
         return fastapi.responses.RedirectResponse("/login")
@@ -64,7 +100,7 @@ def cube_deploys_list(
         clusters_list =[]
         query_code = 500
         query_result = ""
-        logger.info(f"{context.rid_get()} cube deploys exception - {e}")
+        logger.info(f"{context.rid_get()} cube deploys list exception - {e}")
 
     clusters_map = {cluster.id:cluster.name for cluster in clusters_list}
 
@@ -88,7 +124,7 @@ def cube_deploys_list(
             }
         )
     except Exception as e:
-        logger.error(f"{context.rid_get()} cube deploys render exception '{e}'")
+        logger.error(f"{context.rid_get()} cube deploys list render exception '{e}'")
         return templates.TemplateResponse(request, "500.html", {})
 
     if "HX-Request" in request.headers:

@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version < '3.13'",
@@ -121,7 +122,7 @@ name = "click"
 version = "8.1.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "platform_system == 'Windows'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/96/d3/f04c7bfcf5c1862a2a5b845c6b2b360488cf47af55dfa79c98f6a6bf98b5/click-8.1.7.tar.gz", hash = "sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de", size = 336121 }
 wheels = [
@@ -398,7 +399,6 @@ dependencies = [
     { name = "psycopg2" },
     { name = "pydantic" },
     { name = "pyjwt" },
-    { name = "pytest" },
     { name = "python-dotenv" },
     { name = "python-gnupg" },
     { name = "python-multipart" },
@@ -409,6 +409,13 @@ dependencies = [
     { name = "sqlmodel" },
     { name = "ulid-py" },
     { name = "uvicorn" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "supervisor" },
+    { name = "supervisor-stdout" },
 ]
 
 [package.metadata]
@@ -427,7 +434,6 @@ requires-dist = [
     { name = "psycopg2", specifier = ">=2.9.9" },
     { name = "pydantic", specifier = ">=2.9.0" },
     { name = "pyjwt", specifier = ">=2.9.0" },
-    { name = "pytest", specifier = ">=8.3.2" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "python-gnupg", specifier = ">=0.5.2" },
     { name = "python-multipart", specifier = ">=0.0.9" },
@@ -438,6 +444,13 @@ requires-dist = [
     { name = "sqlmodel", specifier = ">=0.0.22" },
     { name = "ulid-py", specifier = ">=1.1.0" },
     { name = "uvicorn", specifier = ">=0.30.6" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.3.2" },
+    { name = "supervisor", specifier = ">=4.2.5" },
+    { name = "supervisor-stdout", git = "https://github.com/coderanger/supervisor-stdout" },
 ]
 
 [[package]]
@@ -750,6 +763,15 @@ wheels = [
 ]
 
 [[package]]
+name = "setuptools"
+version = "78.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/5a/0db4da3bc908df06e5efae42b44e75c81dd52716e10192ff36d0c1c8e379/setuptools-78.1.0.tar.gz", hash = "sha256:18fd474d4a82a5f83dac888df697af65afa82dec7323d09c3e37d1f14288da54", size = 1367827 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/54/21/f43f0a1fa8b06b32812e0975981f4677d28e0f3271601dc88ac5a5b83220/setuptools-78.1.0-py3-none-any.whl", hash = "sha256:3e386e96793c8702ae83d17b853fb93d3e09ef82ec62722e61da5cd22376dcd8", size = 1256108 },
+]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -812,6 +834,23 @@ sdist = { url = "https://files.pythonhosted.org/packages/b4/9c/d85721508122ae927
 wheels = [
     { url = "https://files.pythonhosted.org/packages/69/13/fa916b69d7c21f80a9c5bde0445cbbbdb9542a9d8df73ea3d588aae55c26/starlette-0.38.4-py3-none-any.whl", hash = "sha256:526f53a77f0e43b85f583438aee1a940fd84f8fd610353e8b0c1a77ad8a87e76", size = 71427 },
 ]
+
+[[package]]
+name = "supervisor"
+version = "4.2.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "setuptools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ce/37/517989b05849dd6eaa76c148f24517544704895830a50289cbbf53c7efb9/supervisor-4.2.5.tar.gz", hash = "sha256:34761bae1a23c58192281a5115fb07fbf22c9b0133c08166beffc70fed3ebc12", size = 466073 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2c/7a/0ad3973941590c040475046fef37a2b08a76691e61aa59540828ee235a6e/supervisor-4.2.5-py2.py3-none-any.whl", hash = "sha256:2ecaede32fc25af814696374b79e42644ecaba5c09494c51016ffda9602d0f08", size = 319561 },
+]
+
+[[package]]
+name = "supervisor-stdout"
+version = "0.1.1"
+source = { git = "https://github.com/coderanger/supervisor-stdout#973ba19967cdaf46d9c1634d1675fc65b9574f6e" }
 
 [[package]]
 name = "typing-extensions"
