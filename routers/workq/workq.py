@@ -54,7 +54,7 @@ def workq_list(
         workers_list_result = services.workers.list(db_session=db_session, query=workers_query, offset=offset, limit=limit)
         workers_count = len(workers_list_result.objects)
 
-        backlog_count = services.workq.count_queued(db_session=db_session, queue=models.workq.QUEUE_WORK)
+        backlog_count = services.workq.count_queued_all(db_session=db_session)
 
         logger.info(f"{context.rid_get()} workq list query '{query}' ok")
     except Exception as e:

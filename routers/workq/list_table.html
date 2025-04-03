@@ -1,12 +1,12 @@
 <div class="flex w-12/12 justify-between mt-0 mx-5 mr-2">
     {% if query_code == 0 %}
-        <p class="text-xs font-bold text-black-700">
-            {{query_result}}
-        </p>
+    <p class="text-xs font-bold text-black-700">
+        {{query_result}}
+    </p>
     {% else %}
-        <p class="text-xs font-bold text-red-700">
-            {{query_result}}
-        </p>
+    <p class="text-xs font-bold text-red-700">
+        {{query_result}}
+    </p>
     {% endif %}
     <p class="text-xs font-bold mr-0">
         <a href="/workers?query=state:active" class="text-blue-600">
@@ -14,9 +14,9 @@
         </a>
         &nbsp;
         {% if backlog_count > 0 %}
-            {% set backlog_color = "text-orange-600" %}
+        {% set backlog_color = "text-orange-600" %}
         {% else %}
-            {% set backlog_color = "text-sky-300" %}
+        {% set backlog_color = "text-sky-300" %}
         {% endif %}
 
         <span class="{{backlog_color}}">
@@ -46,17 +46,17 @@
             <td class="p-4">{{ workq.msg }}</td>
             <td class="p-4 font-bold">
                 {% if workq.state == "error" %}
-                    <span class="cursor-help text-red-600" title="todo - error message">
-                        {{workq.state}}
-                    </span>
+                <span class="cursor-help text-red-600" title="todo - error message">
+                    {{workq.state}}
+                </span>
                 {% elif workq.state == "completed" %}
-                    <span class="text-blue-700">
-                        {{workq.state}}
-                    </span>
+                <span class="text-blue-700">
+                    {{workq.state}}
+                </span>
                 {% else %}
-                    <span class="text-sky-300">
-                        {{workq.state}}
-                    </span>
+                <span class="text-orange-600">
+                    {{workq.state}}
+                </span>
                 {% endif %}
             </td>
             <td class="p-4">{{ workq.worker }}</td>

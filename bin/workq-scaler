@@ -50,12 +50,12 @@ def signal_handler(signum, frame):
 
 
 @click.command()
-@click.option('--name', default=None, required=True, help="cluster name to monitor and scale")
+@click.option('--cluster', "cluster_name", default=None, required=True, help="cluster name to monitor and scale")
 @click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
 @click.option('--request-interval', default=3, required=False, help="seconds interval to check cluster requests")
 @click.option('--health-interval', default=30, required=False, help="seconds interval to check cluster health")
 @coro
-async def run(name: str, db_uri: str, request_interval: int, health_interval: int) -> dict:
+async def run(cluster_name: str, db_uri: str, request_interval: int, health_interval: int) -> dict:
     """
     The scaler is responsible for listening for incoming cluster requests and managing cluster machine size based on those requests.
 
@@ -78,10 +78,10 @@ async def run(name: str, db_uri: str, request_interval: int, health_interval: in
     health_unix_t2 = health_unix_t1
 
     with services.database.session.get() as db_session:
-        cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=name)
+        cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_name)
 
         if not cluster:
-            raise ValueError(f"cluster '{name}' is invalid")
+            raise ValueError(f"cluster '{cluster_name}' is invalid")
 
         logger.info(f"[workq-scaler] cluster '{cluster.name}' starting")
 
@@ -93,7 +93,7 @@ async def run(name: str, db_uri: str, request_interval: int, health_interval: in
     while not shutdown:
         # use a new db session on each loop to make sure we don't get stale db data
         with services.database.session.get() as db_session:
-            cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=name)
+            cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_name)
             request = services.clusters.requests.get_pending_by_cluster(db_session=db_session, cluster_id=cluster.id)
 
             if request:
@@ -104,7 +104,7 @@ async def run(name: str, db_uri: str, request_interval: int, health_interval: in
                     request=request,
                 )
 
-                cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=name)
+                cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_name)
                 request = services.clusters.requests.get_by_id(db_session=db_session, id=request.id)
 
                 if request.state == models.cluster_request.STATE_COMPLETED:

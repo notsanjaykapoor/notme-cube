@@ -1,5 +1,5 @@
 from .add import add
-from .count import count_queued
+from .count import count_queued, count_queued_all
 from .gc import gc
 from .get import get_by_id, get_queued
 from .list import list

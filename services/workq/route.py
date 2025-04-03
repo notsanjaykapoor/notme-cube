@@ -11,6 +11,12 @@ handlers = {
 def route(queue: str) -> WorkHandler | None:
     """
     """
-    return handlers.get(queue)()
+    if queue in handlers:
+        return handlers.get(queue)()
 
+    return _handler_default()()
+
+
+def _handler_default() -> WorkHandler:
+    return services.nats.WorkHandler
     

@@ -53,7 +53,7 @@ class Cluster(sqlmodel.SQLModel, table=True):
 
     @property
     def queue(self) -> str:
-        # returns queue cluster monitors, if there is one
+        # the (optional) queue attached to the cluster, used by the workq service
         return self.data.get("queue") or ""
 
     @property
@@ -70,6 +70,7 @@ class Cluster(sqlmodel.SQLModel, table=True):
 
     @property
     def services(self) -> str:
+        """ return comma separated list of cluster services """
         return self.data.get("services") or ""
 
     @property

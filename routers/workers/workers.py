@@ -49,7 +49,7 @@ def workers_list(
         query_code = 0
         query_result = f"query '{query}' returned {workers_list_result.total} results"
 
-        backlog_count = services.workq.count_queued(db_session=db_session, queue=models.workq.QUEUE_WORK)
+        backlog_count = services.workq.count_queued_all(db_session=db_session)
 
         logger.info(f"{context.rid_get()} workers list query '{query}' ok")
     except Exception as e:

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 source .venv/bin/activate
-exec ./bin/workq-scaler run --name workq
+exec ./bin/workq-scaler run --cluster $1

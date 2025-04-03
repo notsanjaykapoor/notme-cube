@@ -25,6 +25,7 @@ def start_service(machine: models.Machine, service: str) -> Struct:
     )
 
     # get service config
+
     service_dict = models.service.get(service)
 
     if not service_dict:
@@ -60,9 +61,10 @@ def start_service(machine: models.Machine, service: str) -> Struct:
         struct.errors.append(result)
         return struct
 
-    # start container
+    # start container with updated entrypoint
 
-    docker_run_cmd = f"{service_dict.get('docker_run')} {docker_image} {service_dict.get('docker_entrypoint')}"
+    docker_entrypoint = service_dict.get('docker_entrypoint').replace("$cluster", machine.cluster)
+    docker_run_cmd = f"{service_dict.get('docker_run')} {docker_image} {docker_entrypoint}"
 
     struct.code, ssh_result = services.ssh.exec(host=machine.ip, user=machine.user, cmd=docker_run_cmd)
 

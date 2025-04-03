@@ -41,6 +41,7 @@ def clusters_machines_list(
     logger.info(f"{context.rid_get()} cluster '{cluster_id}' query '{query}' try")
 
     machines_list = []
+    machines_map = {} # map machine to cluster
     query_code = 0
     query_result = ""
     query_seconds = 0
@@ -49,20 +50,23 @@ def clusters_machines_list(
 
     try:
         if cluster_id == "all":
-            cluster = models.Cluster(id=0, name="all")
+            cluster = None
             clusters_result = services.clusters.list(db_session=db_session, query=query, offset=0, limit=20)
             clusters_list = clusters_result.objects
             app_name = "Machines"
-            query_search = 1
         else:
             cluster = services.clusters.get_by_id_or_name(db_session=db_session, id=cluster_id)
             clusters_list = [cluster]
             app_name = "Cluster Machines"
-            query_search = 0
 
-        for cluster_ in clusters_list:
-            list_result = services.machines.list(cluster=cluster_)
+        for cluster_db in clusters_list:
+            list_result = services.machines.list(cluster=cluster_db)
+
             machines_list.extend(list_result.objects_list)
+
+            for machine in list_result.objects_list:
+                machines_map[machine.name] = cluster_db
+
             query_seconds += list_result.seconds
 
         query_result = f"query '{query}' returned {len(machines_list)} results in {query_seconds}s"
@@ -85,11 +89,11 @@ def clusters_machines_list(
                 "app_name": app_name,
                 "cluster": cluster,
                 "machines_list": machines_list,
+                "machines_map": machines_map,
                 "prompt_text": "search - e.g. cluster:foo",
                 "query": query,
                 "query_code": query_code,
                 "query_result": query_result,
-                "query_search": query_search,
                 "user": user,
             }
         )

@@ -24,15 +24,14 @@ app = fastapi.APIRouter(
 )
 
 
-@app.get("/machines/{machine_name}/containers")
+@app.get("/clusters/{cluster_id}/machines/{machine_name}/containers")
 def machines_containers_list(
     request: fastapi.Request,
+    cluster_id: str,
     machine_name: str,
     user_id: int = fastapi.Depends(main_shared.get_user_id),
     db_session: sqlmodel.Session = fastapi.Depends(main_shared.get_db),
 ):
-    cluster_id = machine_name.split("-")[0]
-
     logger.info(f"{context.rid_get()} cluster '{cluster_id}' machine '{machine_name}' containers list try")
 
     if user_id == 0:

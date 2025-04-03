@@ -1,4 +1,4 @@
 #!/bin/bash
 
 source .venv/bin/activate
-exec ./bin/workq-worker run --queue workq
+exec ./bin/workq-worker run --cluster $1
