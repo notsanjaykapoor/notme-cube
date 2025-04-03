@@ -7,7 +7,7 @@ def machine_name_generate(cluster: models.Cluster, names: list[str]) -> str:
     """
     name_pre = f"{cluster.name}-"
 
-    ids = [int(name.split("-")[1]) for name in names if name.startswith(name_pre)]
+    ids = [int(name.replace(name_pre, "")) for name in names if name.startswith(name_pre)]
 
     if not ids:
         return f"{name_pre}1"
