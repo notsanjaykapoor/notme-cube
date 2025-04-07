@@ -6,6 +6,7 @@ import os
 import random
 import signal
 import sys
+import time
 
 sys.path.append(".")
 
@@ -17,6 +18,7 @@ import nats
 import nats.errors
 import sqlmodel
 
+import context
 import log
 import models
 import services.clusters
@@ -29,7 +31,12 @@ logger = log.init("api")
 
 shutdown: bool = False
 
-workers_set = set()
+daemon_start_unix = 0
+daemon_startup_secs = 30
+
+workers_active_set = set()
+workers_exited_set = set()
+workers_startup_set = set()
 
 def coro(f):
     @functools.wraps(f)
@@ -47,7 +54,7 @@ def cli():
 def signal_handler(signum, frame):
     global shutdown
     shutdown = True
-    logger.info("[workq-daemon] signal handler ... preparing to shutdown")
+    logger.info("[workq-daemon] signal handler ... shutting down")
 
 
 @click.command()
@@ -59,9 +66,28 @@ def signal_handler(signum, frame):
 @coro
 async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, subject: str):
     """
-    The daemon is responsible for scheduling jobs and managing their state.  As jobs are added to the work queue,
-    the daemon schedules them with available workers.  Each worker registers with the daemon and maintains its status
-    with a heartbeat protocol, allowing the daemon to keep state about each of its workers.
+    The daemon is responsible for scheduling jobs and managing their state.  As jobs are added to the work queue, the daemon
+    schedules them with available workers.  Each worker registers with the daemon and maintains its status with a heartbeat protocol.
+
+    The daemon uses 3 separate sets to track workers.  The startup workers set is generated on daemon startup by finding all workers
+    with jobs in a non-terminal state.  This can happen when the daemon is re-started and misses heartbeat messages and when workers
+    exit while processing a job.
+
+    The active workers set is maintained as the daemon receives heartbeat messages.
+
+    The exited workers set is the list of workers that exited, either through normal or abnormal exit.
+
+    Workers in the startup set move to either the active or exited set when:
+        - move to active when a heartbeat message is received
+        - move to exited when a shutdown message is received or a heartbeat message has not be seen for a while
+
+    Worker in the active set move to the exited set when:
+        - shutdown message is received
+        - no heartbeat message is received for a while
+ 
+    The edge condition that is not accounted for is when both the daemon and worker is re-started just as the worker completes a job.
+    In this edge case, the completed message is never received and worker state will be lost on next startup since the worker is dynamically
+    assigned an id.
     """
     db_uri = db_uri or os.environ.get("DATABASE_URL")
 
@@ -80,12 +106,13 @@ async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, s
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    context.rid_set(daemon_name)
+
     logger.info(f"[{daemon_name}] cluster '{cluster_name}' queue '{queue}' starting")
 
     with services.database.session.get() as db_session:
-        await worker_sync(db_session=db_session)
-
-    # todo - how do we find workers that might have exited while processing a job
+        # generate startup list before initialize message handler
+        await _workers_startup_list(db_session=db_session)
 
     nats_client = await services.nats.connect(name=daemon_name)
     nats_client_id = nats_client.client_id
@@ -95,6 +122,20 @@ async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, s
     _nats_sub = await nats_client.subscribe(subject, "", message_handler)
 
     logger.info(f"[{daemon_name}] queue '{queue}' client {nats_client_id} subject '{subject}' subscribed")
+
+    daemon_start_unix = time.time()
+
+    logger.info(f"[{daemon_name}] queue '{queue}' client {nats_client_id} mode - startup")
+
+    while len(workers_startup_set) and (time.time() < daemon_start_unix + daemon_startup_secs):
+        # startup mode to allow any worker heartbeats to be processed and drain startup list
+        await asyncio.sleep(interval)
+
+    with services.database.session.get() as db_session:
+        await _workers_exited_check(db_session=db_session)
+        await _workers_exited_cleanup(db_session=db_session)
+
+    logger.info(f"[{daemon_name}] queue '{queue}' client {nats_client_id} mode - running")
 
     loop_count = 0
 
@@ -110,22 +151,26 @@ async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, s
             loop_count += 1
                 
             if loop_count % 5 == 0:
-                await worker_sync(db_session=db_session)
+                await _workers_exited_check(db_session=db_session)
+                await _workers_exited_cleanup(db_session=db_session)
 
             if not job:
+                # no job to schedule
                 if random.randint(1, 100) < 10:
                     logger.info(f"[{daemon_name}] queue '{queue}' sleep {interval}")
                 await asyncio.sleep(interval)
                 continue
+
+            # there is a job to schedule
 
             workers_count = services.workers.count_active(db_session=db_session)
             backlog_count = services.workq.count_queued(db_session=db_session, queue=queue)
 
             logger.info(f"[{daemon_name}] queue '{queue}' client {nats_client_id} message {job.id} request - workers {workers_count} backlog {backlog_count}")
 
-        # schedule job using nats queue group
-        await work_request(
+        await work_schedule(
             nats_client=nats_client,
+            daemon_name=daemon_name,
             queue=queue,
             job=job,
             interval=interval,
@@ -139,36 +184,56 @@ async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, s
 
 
 async def message_handler(msg) -> int:
+    """
+    Runs as a separate task to processing incoming worker messages.
+
+    Workers send messages when ...
+    """
     msg_data = json.loads(msg.data.decode())
-    job_id = msg_data.get("job_id") or 0
-    job_state = msg_data.get("job_state") or ""
+
     worker_id = msg_data.get("worker_id") or ""
     worker_state = msg_data.get("worker_state") or ""
 
     try:
         with services.database.session.get() as db_session:
-            if msg.subject.endswith(".pong"):
-                logger.info(f"[workq-daemon] pong message {msg_data}")
+            if msg.subject == services.nats.NATS_MSG_PONG:
+                logger.info(f"[{context.rid_get()}] pong message {msg_data}")
 
-                # get or create worker and update state
-                services.workers.get_or_create(
+                # pong messages are sent by workers periodically as heartbeat messages.
+                # the daemon stores worker state in the db and in an in-memory cache for easy access
+
+                worker_job_id_last = msg_data.get("worker_job_id_last") or 0
+
+                _code, _worker = services.workers.get_or_create(
                     db_session=db_session, name=worker_id, state=worker_state
                 )
-                workers_set.add(worker_id)
-            elif msg.subject.endswith(".shutdown"):
-                logger.info(f"[workq-daemon] shutdown message {msg_data}")
 
-                # update worker state
+                if worker_id not in workers_active_set:
+                    await _jobs_state_recover(db_session=db_session, worker_id=worker_id, worker_job_id_last=worker_job_id_last)
+
+                workers_startup_set.discard(worker_id)
+                workers_active_set.add(worker_id)
+            elif msg.subject == services.nats.NATS_MSG_SHUTDOWN:
+                logger.info(f"[{context.rid_get()}] shutdown message {msg_data}")
+
+                # shutdown messages are sent by workers on a normal shutdown.
+                # the daemon updates worker data in the db and remove it from the in-memory cache
+
                 services.workers.state_term(db_session=db_session, name=worker_id)
-                workers_set.discard(worker_id)
-            elif msg.subject.endswith(".status"):
-                logger.info(f"[workq-daemon] status message {msg_data}")
+                workers_active_set.discard(worker_id)
+                workers_exited_set.add(worker_id)
+            elif msg.subject == services.nats.NATS_MSG_STATUS:
+                logger.info(f"[{context.rid_get()}] status message {msg_data}")
+
+                # status messages are sent by workers to indicate job completion or error.
+
+                job_id = msg_data.get("job_id") or 0
+                job_state = msg_data.get("job_state") or ""
 
                 if not job_id or not job_state:
-                    logger.error(f"[workq-daemon] status message missing job or job_state - {msg_data}")
+                    logger.error(f"[{context.rid_get()}] status message missing job or job_state - {msg_data}")
                     return -1
 
-                # mark job as completed or error
                 job = services.workq.get_by_id(db_session=db_session, id=job_id)
 
                 if job_state == models.workq.STATE_COMPLETED:
@@ -176,16 +241,22 @@ async def message_handler(msg) -> int:
                 elif job_state == models.workq.STATE_ERROR:
                     services.workq.state_error(db_session=db_session, job=job)
                 else:
-                    logger.error(f"[workq-daemon] status message invalid - {msg_data}")
+                    logger.error(f"[{context.rid_get()}] status message invalid - {msg_data}")
     except Exception as e:
-        logger.error(f"[workq-daemon] exception - {e}")
+        logger.error(f"[{context.rid_get()}] exception - {e}")
 
-    logger.info(f"[workq-daemon] workers count {len(workers_set)}")
+    logger.info(f"[{context.rid_get()}] workers active {len(workers_active_set)}, startup {len(workers_startup_set)}, exited {len(workers_exited_set)}")
 
     return 0
 
 
-async def work_request(nats_client, queue: str, job: models.WorkQ, interval: int) -> int:
+async def work_schedule(nats_client, daemon_name: str, queue: str, job: models.WorkQ, interval: int) -> int:
+    """
+    Schedule job with an available worker using a nats queue group and the request-response protocol where at most
+    1 worker will respond.  If there are no workers available, wait in a sleep loop until a worker is available.
+
+    Note that while this is a blocking operation, the message_handler runs in a separate task to handle messages from workers.
+    """
     nats_client_id = nats_client.client_id
 
     while not shutdown:
@@ -197,7 +268,7 @@ async def work_request(nats_client, queue: str, job: models.WorkQ, interval: int
             response_msg = services.nats.msg_decode(b=response.data)
             worker_id = response_msg.get("worker_id")
 
-            logger.info(f"[workq-daemon] queue '{queue}' client {nats_client_id} message {job.id} response {response_msg}")
+            logger.info(f"[{daemon_name}] queue '{queue}' client {nats_client_id} message {job.id} response {response_msg}")
 
             with services.database.session.get() as db_session:
                 # mark worker as busy
@@ -216,22 +287,134 @@ async def work_request(nats_client, queue: str, job: models.WorkQ, interval: int
             return 0
         except nats.errors.NoRespondersError as e:
             # no responders, either all workers are busy or there are no workers
-            logger.error(f"[workq-daemon] queue '{queue}' client {nats_client_id} message {job.id} - {e}")
+            logger.error(f"[{daemon_name}] queue '{queue}' client {nats_client_id} message {job.id} - {e}")
         except nats.errors.TimeoutError as e:
             # timeouts should not happen
-            logger.error(f"[workq-daemon] nats timeout exception - {e}")
+            logger.error(f"[{daemon_name}] nats timeout exception - {e}")
 
         await asyncio.sleep(interval)
 
 
-async def worker_sync(db_session: sqlmodel.Session) -> int:
+async def _jobs_state_recover(db_session: sqlmodel.Session, worker_id: str, worker_job_id_last: int) -> int:
     """
-    Sync state of each worker database object using its updated_at timestamp.
+    Recover jobs in processing state assigned to the specified worker.
+
+    If the daemon is re-started, it could have missed a worker completed message, leaving the job in the processing state.
+    Use the worker's last completed job id to determine if the job was completed.
+    """
+    jobs = services.workq.get_processing_by_worker_id(db_session=db_session, worker_id=worker_id)
+
+    job_changes = 0
+
+    for job in jobs:
+        if job.id <= worker_job_id_last:
+            # worker completed this job, mark it as completed
+            services.workq.state_completed(db_session=db_session, job=job)
+            job_changes += 1
+            logger.info(f"[{context.rid_get()}] jobs state recover - job {job.id} completed")
+
+    logger.info(f"[{context.rid_get()}] jobs state recover - changes {job_changes}")
+
+    return job_changes
+
+
+async def _workers_exited_check(db_session: sqlmodel.Session) -> int:
+    """
+    Workers are considered exited when:
+
+    1. daemon receives a shutdown message
+    2. daemon has not received a heartbeat message for an extended period
+
+    This method check workers in the startup and active set, and moves them to exited if they haven't sent a heartbeat for
+    HEARTBEAT_STALE_SECS seconds.
+    """
+
+    workers = list(workers_active_set.union(workers_exited_set))
+
+    hearbeat_struct = services.workers.active_check(
+        db_session=db_session,
+        workers=workers,
+        seconds=models.worker.HEARTBEAT_STALE_SECS,
+    )
+
+    for worker in hearbeat_struct.exited:
+        workers_exited_set.add(worker.name)
+        workers_active_set.discard(worker.name)
+        workers_startup_set.discard(worker.name)
+
+    logger.info(f"[{context.rid_get()}] workers exited check - {len(hearbeat_struct.exited)}")
+
+    return len(hearbeat_struct.exited)
+
+
+async def _workers_exited_cleanup(db_session: sqlmodel.Session) -> int:
+    """
+    Cleanup method after workers exit.
+
+    If a worker was processing a job and it exited without completion then the job state should be reset to queued.
+    """
+    logger.info(f"[{context.rid_get()}] workers exited cleanup - {len(workers_exited_set)}")
+
+    jobs_updated = 0
+
+    workers_processed = []
+
+    for worker_id in workers_exited_set:
+        jobs = services.workq.get_processing_by_worker_id(
+            db_session=db_session,
+            worker_id=worker_id,
+        )
+
+        if not jobs:
+            logger.info(f"[{context.rid_get()}] workers exited cleanup - worker '{worker_id}' no jobs to cleanup")
+
+        for job in jobs:
+            job.processing_at = None
+            job.state = models.workq.STATE_QUEUED
+            db_session.add(job)
+            db_session.commit()
+            jobs_updated += 1
+            logger.info(f"[{context.rid_get()}] workers exited cleanup - worker '{worker_id}' job {job.id} state set to '{job.state}'")
+
+        workers_processed.append(worker_id)
+
+    for worker_id in workers_processed:
+        workers_exited_set.discard(worker_id)
+
+    return jobs_updated
+
+
+async def _workers_startup_list(db_session: sqlmodel.Session) -> int:
+    """
+    On startup, get the list of workers with jobs in the processing state.  These jobs need to be transitioned to a terminal state
+    of completed or error.  
+    """
+
+    jobs = services.workq.get_processing_all(db_session=db_session)
+
+    for job in jobs:
+        workers_startup_set.add(job.worker)
+
+    logger.info(f"[{context.rid_get()}] workers startup list - {len(workers_startup_set)}")
+
+    return 0
+
+
+# deprecated
+async def _workers_state_sync(db_session: sqlmodel.Session) -> int:
+    """
+    Sync the state of each worker in the database to check for stale workers.
+    
+    The heartbeat messages sent from each worker are used to set/update worker timestamps in the database.  If a worker hasn't
+    sent a heartbeat message in HEARTBEAT_STALE_SECS, mark the worker as stale.
     """
     # check and discard old workers from table
-    workers_struct = services.workers.state_check(db_session=db_session)
+    workers_struct = services.workers.state_check(
+        db_session=db_session,
+        seconds=models.worker.HEARTBEAT_STALE_SECS,
+    )
 
-    logger.info(f"[workq-daemon] workers sync - active {len(workers_struct.active)}, stale {len(workers_struct.stale)}")
+    logger.info(f"[{context.rid_get()}] workers state sync - active {len(workers_struct.active)}, stale {len(workers_struct.stale)}")
     
     for worker in workers_struct.active:
         workers_set.add(worker.name)

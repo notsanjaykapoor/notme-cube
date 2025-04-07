@@ -4,7 +4,7 @@ import services.hetzner.servers
 import services.hetzner.ssh_keys
 import services.machines
 import services.machines.containers
-
+import services.ssh
 
 def machine_add(cluster: models.Cluster, machine_name: str="", machine_tags: dict={}) -> tuple[int, models.Machine]:
     """
@@ -41,7 +41,14 @@ def machine_add(cluster: models.Cluster, machine_name: str="", machine_tags: dic
         tags=machine_tags_merged,
     )
 
-    return create_result.code, create_result.machine
+    code = create_result.code
+    machine = create_result.machine
+
+    if code == 0:
+        # verify machine ssh connection
+        code, _result = services.ssh.verify(host=machine.ip, user=machine.user, retries=5)
+
+    return code, machine
 
 
 def machine_remove(cluster: models.Cluster, machine_name: str) -> int:

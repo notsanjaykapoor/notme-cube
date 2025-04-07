@@ -9,12 +9,13 @@ class Struct:
     containers_missing: list[models.Container]
     containers_running: list[models.Container]
     containers_status: int
+    docker_status: int
     errors: list[str]
 
 
 def check(machine: models.Machine) -> Struct:
     """
-    Check containers on machine.
+    Check docker and containers on machine.
 
     Returns status of containers configured vs what is actually running.
     """
@@ -23,16 +24,17 @@ def check(machine: models.Machine) -> Struct:
         containers_missing=[],
         containers_running=[],
         containers_status=0,
+        docker_status=0,
         errors=[],
     )
 
     list_result = services.machines.containers.list(machine=machine, query="")
 
+    print("containers list ", list_result) # xxx
+
     if list_result.code == 127:
         # docker not running
-        struct.containers_missing.extend(
-            _containers_build(services=["docker"])
-        )
+        struct.docker_status = list_result.code
 
     services_list = [s for s in machine.services.split(",") if s]
 

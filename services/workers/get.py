@@ -16,12 +16,17 @@ def get_by_name(db_session: sqlmodel.Session, name: str) -> models.Worker | None
     return worker
 
 
-def get_or_create(db_session: sqlmodel.Session, name: str, state: str) -> models.Worker:
+def get_or_create(db_session: sqlmodel.Session, name: str, state: str) -> tuple[int, models.Worker]:
     """
     Find existing worker or create new worker, and update worker state
     """
     worker = get_by_name(db_session=db_session, name=name)
-    worker = worker or services.workers.create(db_session=db_session, name=name)
+
+    if worker:
+        code = 0
+    else:
+        worker = services.workers.create(db_session=db_session, name=name)
+        code = 201
 
     worker.state = state
     worker.updated_at = datetime.datetime.now(datetime.timezone.utc)
@@ -29,5 +34,5 @@ def get_or_create(db_session: sqlmodel.Session, name: str, state: str) -> models
     db_session.add(worker)
     db_session.commit()
 
-    return worker
+    return [code, worker]
 

@@ -1,7 +1,7 @@
 from .add import add
 from .count import count_queued, count_queued_all
 from .gc import gc
-from .get import get_by_id, get_queued
+from .get import get_by_id, get_processing_all, get_processing_by_worker_id, get_queued
 from .list import list
 from .partition import partition
 from. protocol import WorkHandler

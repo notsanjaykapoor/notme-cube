@@ -33,11 +33,6 @@ def list(machine: models.Machine, query: str) -> Struct:
     cmd_running = "docker ps -a --format '{{json .}}'"
     struct.code, result = services.ssh.exec(host=machine.ip, user=machine.user, cmd=cmd_running)
 
-    if struct.code == 255:
-        # clear hosts file first, then run command again
-        services.ssh.ssh_hosts_remove(host=machine.ip)
-        struct.code, result = services.ssh.exec(host=machine.ip, user=machine.user, cmd=cmd_running)
-
     struct.seconds = round(time.time() - t1, 2)
 
     if struct.code != 0:

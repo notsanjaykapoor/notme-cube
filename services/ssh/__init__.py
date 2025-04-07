@@ -1,1 +1,1 @@
-from .utils import exec, ssh_hosts_remove
+from .utils import exec, ssh_hosts_remove, verify

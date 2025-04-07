@@ -30,7 +30,4 @@ def start(machine: models.Machine, service: str) -> Struct:
         struct.errors.append(f"container '{service}' already running")
         return struct
 
-    if service == models.service.SERVICE_DOCKER:
-        return services.machines.containers.start_docker(machine=machine)
-    else:
-        return services.machines.containers.start_service(machine=machine, service=service)
+    return services.machines.containers.start_service(machine=machine, service=service)

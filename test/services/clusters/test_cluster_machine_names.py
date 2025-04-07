@@ -45,5 +45,9 @@ def test_cluster_machine_names_alphanum(db_session: sqlmodel.Session):
 
     assert(machine_name) == "test-0-4"
 
+    machine_name = services.clusters.machine_name_generate(cluster=cluster, names=["test-0-1", "test-0-9"])
+
+    assert(machine_name) == "test-0-10"
+
     db_session.delete(cluster)
     db_session.commit()

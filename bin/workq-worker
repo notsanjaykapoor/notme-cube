@@ -14,6 +14,7 @@ import asyncio
 import click
 import ulid
 
+import context
 import log
 import models
 import services.clusters
@@ -45,7 +46,7 @@ def signal_handler(signum, frame):
     global shutdown
     shutdown = True
     worker_id = worker_me.get("worker_id")
-    logger.info(f"[workq-worker] {worker_id} signal handler ... preparing to shutdown")
+    logger.info(f"[workq-worker] {worker_id} signal handler ... shutting down")
 
 
 @click.command()
@@ -85,12 +86,16 @@ async def run(cluster_name: str, db_uri: str, worker_name: str, interval: int, i
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    context.rid_set(worker_name)
+
     if not services.workq.route(queue=queue):
-        logger.error(f"[{worker_name}] queue '{queue}' handler required")
+        logger.error(f"[{worker_name}] cluster '{cluster_name}' queue '{queue}' handler not found")
         exit(1)
 
     worker_me["worker_id"] = id
     worker_me["worker_state"] = models.worker.STATE_IDLE
+    worker_me["worker_job_count"] = 0
+    worker_me["worker_job_id_last"] = 0
 
     worker_id = worker_me.get("worker_id")
 
@@ -102,12 +107,12 @@ async def run(cluster_name: str, db_uri: str, worker_name: str, interval: int, i
 
     logger.info(f"[{worker_name}] {worker_id} cluster '{cluster_name}' queue '{queue}' client {nats_client_id} connected")
 
-    _task = asyncio.create_task(
+    pong_task_ = asyncio.create_task(
         pong_task(nats_client=nats_client, interval=15)
     )
 
     while not shutdown:
-        # subscribe without a handler for a single message, wait and process message, and repeat
+        # subscribe without a handler for 1 message, wait and process message, and repeat
         nats_sub = await nats_client.subscribe(queue, subject)
         await nats_sub.unsubscribe(limit=1)
 
@@ -128,19 +133,19 @@ async def run(cluster_name: str, db_uri: str, worker_name: str, interval: int, i
 
                 worker_me["worker_state"] = models.worker.STATE_BUSY
 
-                logger.info(f"[workq-worker] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} processing")
+                logger.info(f"[{worker_name}] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} processing")
 
-                reply_dict = msg_dict | {"job_state":  models.workq.STATE_PROCESSING, "worker_id": worker_id}
+                reply_dict = msg_dict | {"worker_me":  models.workq.STATE_PROCESSING, "worker_id": worker_id}
                 await msg.respond(services.nats.msg_encode(d = reply_dict))
                 await nats_sub.drain()
 
-                logger.info(f"[workq-worker] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} nats ack")
+                logger.info(f"[{worker_name}] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} nats ack")
 
                 try:
                     if job.msg == models.workq.MSG_SHUTDOWN:
                         # shutdown message
                         shutdown = True
-                        logger.info(f"[workq-worker] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} shutdown message")
+                        logger.info(f"[{worker_name}] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} shutdown message")
                     else:
                         # call handler to process message
                         handler = services.workq.route(queue=queue)
@@ -148,41 +153,63 @@ async def run(cluster_name: str, db_uri: str, worker_name: str, interval: int, i
 
                     job_state = models.workq.STATE_COMPLETED
 
-                    logger.info(f"[workq-worker] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} completed")
+                    # set last completed job id and increment job counter
+                    worker_me["worker_job_id_last"] = job_id
+                    worker_me["worker_job_count"] += 1
+
+                    logger.info(f"[{worker_name}] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} completed")
                 except Exception as e:
                     job_state = models.workq.STATE_ERROR
-                    logger.error(f"[workq-worker] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} exception {e}")
+                    logger.error(f"[{worker_name}] {worker_id} cluster '{cluster_name}' queue '{queue}' job {job_id} exception {e}")
 
                 reply_dict = msg_dict | {"job_state": job_state, "worker_id": worker_id}
                 await nats_client.publish("workers.status", services.nats.msg_encode(d = reply_dict))
 
                 worker_me["worker_state"] = models.worker.STATE_IDLE
 
-                # loop exits here since subscription was for 1 message
+                # loop exits here because nats subscription was for 1 message
 
-    logger.info(f"[workq-worker] {worker_id} cluster '{cluster_name}' queue '{queue}' client {nats_client_id} closing")
+    pong_task_.cancel()
 
-    await nats_client.publish("workers.shutdown", services.nats.msg_encode(d={"worker_id": worker_id}))
+    logger.info(f"[{worker_name}] {worker_id} cluster '{cluster_name}' queue '{queue}' client {nats_client_id} closing")
+
+    await nats_client.publish(services.nats.NATS_MSG_SHUTDOWN, services.nats.msg_encode(d={"worker_id": worker_id}))
     await nats_client.drain()
     await nats_client.close()
 
-    logger.info(f"[workq-worker] {worker_id} cluster '{cluster_name}' queue '{queue}' client {nats_client_id} exiting")
+    logger.info(f"[{worker_name}] {worker_id} cluster '{cluster_name}' queue '{queue}' client {nats_client_id} exiting")
 
 
 async def pong_task(nats_client, interval: int):
-    logger.info(f"[workq-worker] {worker_me.get('worker_id')} pong task starting")
+    """
+    Heartbeat message sent from workers to the daemon.
+    """
+    worker_id = worker_me.get("worker_id")
 
-    while True:
-        if shutdown:
-            break
+    logger.info(f"[{context.rid_get()}] {worker_id} pong task starting")
 
-        if random.randint(1, 100) < 10:
-            logger.info(f"[workq-worker] {worker_me.get('worker_id')} pong publish")
+    pong_count = 0
 
-        await nats_client.publish("workers.pong", services.nats.msg_encode(d=worker_me))
-        await asyncio.sleep(interval)
+    try:
+        while True:
+            if shutdown:
+                break
 
-    logger.info(f"[workq-worker] {worker_me.get('worker_id')} pong task exiting")
+            if random.randint(1, 100) < 10:
+                logger.info(f"[{context.rid_get()}] {worker_id} pong publish")
+
+            await nats_client.publish(
+                services.nats.NATS_MSG_PONG,
+                services.nats.msg_encode(d=(worker_me | {"pong_count": pong_count})),
+            )
+
+            await asyncio.sleep(interval)
+
+            pong_count += 1
+    except asyncio.CancelledError:
+            pass
+
+    logger.info(f"[{context.rid_get()}] {worker_id} pong task exiting")
 
     
 cli.add_command(run)

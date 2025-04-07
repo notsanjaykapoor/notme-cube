@@ -2,6 +2,7 @@ import datetime
 
 import sqlmodel
 
+HEARTBEAT_STALE_SECS = 60
 
 STATE_BUSY = "busy"
 STATE_IDLE = "idle"

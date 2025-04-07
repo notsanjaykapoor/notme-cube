@@ -16,7 +16,7 @@ dependencies = [
     "jinja2>=3.1.4",
     "nats-py>=2.9.0",
     "nkeys>=0.2.1",
-    "psycopg2>=2.9.9",
+    "psycopg2>=2.9.10",
     "pydantic>=2.9.0",
     "pyjwt>=2.9.0",
     "python-dotenv>=1.0.1",
@@ -39,7 +39,7 @@ dev = ["pytest>=8.3.2", "supervisor>=4.2.5", "supervisor-stdout"]
 select = ["E", "F"]
 ignore = ["E402"]
 
-line-length = 180
+line-length = 120
 
 [tool.ruff.isort]
 force-sort-within-sections = true
