@@ -57,6 +57,7 @@ def machines_containers_list(
         else:
             logger.error(f"{context.rid_get()} cluster '{cluster_id}' machine '{machine_name}' containers list error - {check_result.errors}")
     except Exception as e:
+        containers_list = []
         logger.error(f"{context.rid_get()} cluster '{cluster_id}' machines containers list exception '{e}'")
 
     if "HX-Request" in request.headers:

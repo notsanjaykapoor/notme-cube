@@ -17,8 +17,8 @@
             <th class="p-4">services</th>
             <th class="p-4">type</th>
             <th class="p-4">state</th>
-            <th class="p-4">id</th>
             <th class="p-4">containers</th>
+            <th class="p-4">id</th>
             <th class="p-4">ssh</th>
         </tr>
     </thead>
@@ -34,7 +34,6 @@
             <td class="p-4 font-normal">{{ machine.services }}</td>
             <td class="p-4 font-normal">{{ machine.type }}</td>
             <td class="p-4 font-normal">{{ machine.state }}</td>
-            <td class="p-4 font-normal">{{ machine.id }}</td>
             <td class="p-4 font-normal">
                 {% if machine.state == "running" %}
                 <a href="/clusters/{{machine_cluster.name}}/machines/{{machine.name}}/containers"
@@ -48,6 +47,7 @@
                 </a>
                 {% endif %}
             </td>
+            <td class="p-4 font-normal">{{ machine.id }}</td>
             <td class="p-4 font-normal opacity-30">ssh {{ machine.user }}@{{ machine.ip }}</td>
         </tr>
         {% endfor %}

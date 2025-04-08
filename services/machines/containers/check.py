@@ -28,17 +28,11 @@ def check(machine: models.Machine) -> Struct:
         errors=[],
     )
 
-    list_result = services.machines.containers.list(machine=machine, query="")
-
-    print("containers list ", list_result) # xxx
-
-    if list_result.code == 127:
-        # docker not running
-        struct.docker_status = list_result.code
-
     services_list = [s for s in machine.services.split(",") if s]
 
+    list_result = services.machines.containers.list(machine=machine, query="")
     struct.containers_running = list_result.objects_list
+
     struct.containers_missing.extend(
         _containers_build(services=set(services_list) - set(list_result.objects_map.keys()))
     )
