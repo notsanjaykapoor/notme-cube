@@ -25,10 +25,11 @@ import routers.cube.cube_root
 import routers.clusters.clusters
 import routers.machines.containers
 import routers.machines.machines
+import routers.turnstile
+import routers.turnstile.turnstile
 import routers.workers.workers
 import routers.workq.workq
 import services.database
-import services.cube.deploys
 import services.users
 
 logger = log.init("app")
@@ -67,6 +68,7 @@ app.include_router(routers.cube.cube_root.app)
 app.include_router(routers.clusters.clusters.app)
 app.include_router(routers.machines.containers.app)
 app.include_router(routers.machines.machines.app)
+app.include_router(routers.turnstile.turnstile.app)
 app.include_router(routers.workers.workers.app)
 app.include_router(routers.workq.workq.app)
 
