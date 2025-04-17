@@ -10,11 +10,10 @@ import dot_init  # noqa: F401
 import models
 import services.clusters
 import services.database
-import services.users
 
 # set app env vars
 os.environ["APP_ENV"] = "tst"
-os.environ["CUBE_CONFIG_PATH"] = "file://localhost//Users/sanjaykapoor/notme/notme-cube/test/data/cube_config.yml"
+os.environ["CUBE_CONFIG_PATH"] = "file:///Users/sanjaykapoor/notme/notme-cube/test/data/cube_config.yml"
 
 test_db_name = os.environ.get("DATABASE_TEST_URL")
 connect_args: dict = {}
