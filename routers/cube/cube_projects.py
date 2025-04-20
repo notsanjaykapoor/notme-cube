@@ -140,6 +140,20 @@ def cube_projects_show(
         )
         deploys_list = deploys_result.objects
         deploys_total = deploys_result.total
+
+        # map deploys by cluster, so we can identify the most recent deploy in a terminal state
+        deploys_map_by_cluster = {}
+        for deploy in deploys_list:
+            if deploy.cluster_id not in deploys_map_by_cluster:
+                deploys_map_by_cluster[deploy.cluster_id] = []
+
+            if len(deploys_map_by_cluster[deploy.cluster_id]) == 0:
+                if deploy.state_terminal == 0:
+                    # most recent deploy in cluster is pending, mark the cluster to prevent new deploys
+                    deploys_map_by_cluster[deploy.cluster_id].append(0)
+                else:
+                    # most recent deploy in cluster is in a terminal state
+                    deploys_map_by_cluster[deploy.cluster_id].append(deploy.id)
  
         clusters_result = services.clusters.list(
             db_session=db_session,
@@ -149,11 +163,14 @@ def cube_projects_show(
         )
         clusters_list = clusters_result.objects
 
+        # map cluster id to name
+        clusters_map = {
+            cluster.id:cluster.name for cluster in clusters_list
+        }
+
         logger.info(f"{context.rid_get()} cube project '{project_name}' ok")
     except Exception as e:
         logger.info(f"{context.rid_get()} cube project '{project_name}' pods exception - {e}")
-
-    clusters_map = {cluster.id:cluster.name for cluster in clusters_list}
 
     if "HX-Request" in request.headers:
         template = ""
@@ -168,10 +185,11 @@ def cube_projects_show(
                 "app_name": "Cube Project",
                 "clusters_list": clusters_list,
                 "clusters_map": clusters_map,
+                "cube_path": cube_path,
                 "deploys_list": deploys_list,
+                "deploys_map_by_cluster": deploys_map_by_cluster,
                 "deploys_total": deploys_total,
                 "pods_list": pods_list,
-                "cube_path": cube_path,
                 "project": project,
                 "user": user,
             }
