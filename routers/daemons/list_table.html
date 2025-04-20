@@ -1,0 +1,45 @@
+<div class="flex w-full justify-between mt-0 mx-5 mr-0">
+    {% if query_code == 0 %}
+    <p class="text-xs font-bold text-black-700">
+        {{query_result}}
+    </p>
+    {% else %}
+    <p class="text-xs font-bold text-red-700">
+        {{query_result}}
+    </p>
+    {% endif %}
+</div>
+
+<table class="mt-20 mx-5 w-full">
+    <thead class="font-normal text-left text-xs leading-6 text-center text-zinc-800">
+        <tr>
+            <th class="p-4">name</th>
+            <th class="p-4">service</th>
+            <th class="p-4">state</th>
+            <th class="p-4">timestamp</th>
+            <th class="p-4">id</th>
+            <th class="p-4"></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for daemon in daemons_list %}
+
+        {% if daemon.active == 1 %}
+        {% set state_color = "text-blue-700" %}
+        {% else %}
+        {% set state_color = "text-red-700" %}
+        {% endif %}
+
+        <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 font-normal text-center text-xs">
+            <td class="p-4">{{ daemon.name }}</td>
+            <td class="p-4">{{ daemon.service }}</td>
+            <td class="p-4 {{state_color}} font-bold">
+                {{ daemon.state }}
+            </td>
+            <td class="p-4">{{ daemon.last_timestamp(tz="US/Central") }}</td>
+            <td class="p-4">{{ daemon.id }}</td>
+            <td></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

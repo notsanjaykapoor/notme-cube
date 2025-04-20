@@ -30,18 +30,4 @@ def cube_root(
     if user_id == 0:
         return fastapi.responses.RedirectResponse("/login")
 
-    user = services.users.get_by_id(db_session=db_session, id=user_id)
-
-    cube_options = ["projects", "deploys", "ingress"]
-
-    response = templates.TemplateResponse(
-        request,
-        "cube/cube_root.html",
-        {
-            "app_name": "Cube",
-            "cube_options": cube_options,
-            "user": user,
-        }
-    )
-
-    return response
+    return fastapi.responses.RedirectResponse("/cube/projects")

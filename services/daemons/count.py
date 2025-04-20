@@ -6,21 +6,21 @@ import models
 
 def count_active(db_session: sqlmodel.Session) -> int:
     """
-    get count of workers that are in the "active" virtual state
+    get count of daemons that are in the "active" virtual state
     """
     return db_session.scalar(
         sqlmodel.select(
-            sqlalchemy.func.count(models.Worker.id)
-        ).where(models.Worker.state.in_(models.worker.STATES_ACTIVE))
+            sqlalchemy.func.count(models.Daemon.id)
+        ).where(models.Daemon.state.in_(models.daemon.STATES_ACTIVE))
     )
 
 
 def count_all(db_session: sqlmodel.Session) -> int:
     """
-    get count of all workers independent of state
+    get count of all daemons independent of state
     """
     return db_session.scalar(
         sqlmodel.select(
-            sqlalchemy.func.count(models.Worker.id)
+            sqlalchemy.func.count(models.Daemon.id)
         )
     )

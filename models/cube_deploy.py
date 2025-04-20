@@ -32,3 +32,10 @@ class CubeDeploy(sqlmodel.SQLModel, table=True):
     project_name: str = sqlmodel.Field(index=True, nullable=False)
     state: str = sqlmodel.Field(index=True, nullable=False)
 
+
+    @property
+    def state_terminal(self) -> int:
+        if self.state in STATES_PENDING:
+            return 0
+        
+        return 1

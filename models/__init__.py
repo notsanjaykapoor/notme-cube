@@ -5,6 +5,7 @@ from .container import Container
 from .cube_deploy import CubeDeploy
 from .cube_pod import CubePod
 from .cube_project import CubeProject
+from .daemon import Daemon
 from .machine import Machine
 from .service import get
 from .user import User

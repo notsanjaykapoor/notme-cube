@@ -51,7 +51,7 @@ def list(path: str, query: str="") -> Struct:
             continue
 
         location = object.get("location")
-        source_dir, _ = services.files.file_uri_parse(source_uri=location)
+        _, source_dir, _ = services.files.file_uri_parse(source_uri=location)
 
         project = models.CubeProject(
             name=name,

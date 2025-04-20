@@ -17,9 +17,9 @@ import main_shared
 import routers.auth.login
 import routers.auth.login_oauth
 import routers.auth.logout
+import routers.daemons.daemons
 import routers.cube.cube_deploys
 import routers.cube.cube_ingress
-import routers.cube.cube_pods
 import routers.cube.cube_projects
 import routers.cube.cube_root
 import routers.clusters.clusters
@@ -62,10 +62,10 @@ app.include_router(routers.auth.login_oauth.app)
 app.include_router(routers.auth.logout.app)
 app.include_router(routers.cube.cube_deploys.app)
 app.include_router(routers.cube.cube_ingress.app)
-app.include_router(routers.cube.cube_pods.app)
 app.include_router(routers.cube.cube_projects.app)
 app.include_router(routers.cube.cube_root.app)
 app.include_router(routers.clusters.clusters.app)
+app.include_router(routers.daemons.daemons.app)
 app.include_router(routers.machines.containers.app)
 app.include_router(routers.machines.machines.app)
 app.include_router(routers.turnstile.turnstile.app)

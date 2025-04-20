@@ -13,43 +13,22 @@
         <tr>
             <th class="p-4">name</th>
             <th class="p-4 text-left">location</th>
-            <th class="p-4">deploy</th>
+            <th class="p-4">deploys</th>
         </tr>
     </thead>
     <tbody>
         {% for project in projects_list %}
         <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 text-center text-xs">
             <td class="p-4 font-normal">
-                <a href="/cube/projects/{{project.name}}/pods" class="font-bold text-blue-600">
+                <a href="/cube/projects/{{project.name}}" class="font-bold text-blue-600">
                     {{ project.name }}
                 </a>
             </td>
             <td class="p-4 font-normal text-left">{{ project.dir }}</td>
-            <td class="p-4 font-normal text-center">
-                <select
-                    class="cluster-select px-0 pb-1.5 max-w-sm text-xs text-gray-400 bg-transparent border-0 border-b border-none appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer disabled:border-0 disabled:bg-blue-gray-50">
-                    <option selected>select cluster</option>
-                    {% for cluster in clusters_list %}
-                    <option value="/cube/deploy/projects/{{project.name}}?cluster_id={{cluster.name}}">
-                        {{ cluster.name }}
-                    </option>
-                    {% endfor %}
-                    </option>
-                </select>
+            <td class="p-4 font-normal">
+                {{ projects_deploys_count.get(project.name) }}
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-
-<script>
-    // listen for select change events and redirect
-    const elements = document.getElementsByClassName("cluster-select")
-    const elements_count = elements.length
-
-    for (var i = 0; i < elements_count; i++) {
-        elements[i].addEventListener("change", function () {
-            window.location.href = this.value
-        })
-    }
-</script>

@@ -16,7 +16,10 @@ import services.cube.projects
 logger = log.init("app")
 
 # initialize templates dir
-templates = fastapi.templating.Jinja2Templates(directory="routers", context_processors=[main_shared.jinja_context])
+templates = fastapi.templating.Jinja2Templates(
+    directory="routers",
+    context_processors=[main_shared.jinja_context],
+)
 
 app = fastapi.APIRouter(
     tags=["app"],
@@ -25,7 +28,7 @@ app = fastapi.APIRouter(
 )
 
 @app.get("/cube/deploy/projects/{project_name}", response_class=fastapi.responses.HTMLResponse)
-def cube_deploys_list(
+def cube_deploys_create(
     request: fastapi.Request,
     project_name: str,
     cluster_id: str,
@@ -44,9 +47,11 @@ def cube_deploys_list(
     projects_result = services.cube.projects.list(path=services.cube.config_path(), query=f"name:{project_name}")
     project = projects_result.projects[0]
 
+    referer_path = request.headers.get("referer")
+
     if not cluster or not project:
         logger.error(f"{context.rid_get()} cube deploy project '{project_name}' cluster '{cluster_id}' - invalid project or cluster")
-        return fastapi.responses.RedirectResponse(request.headers.get("referer"))
+        return fastapi.responses.RedirectResponse(referer_path)
 
     create_result = services.cube.deploys.create(
         db_session=db_session,
@@ -56,7 +61,7 @@ def cube_deploys_list(
 
     logger.info(f"{context.rid_get()} cube deploy project '{project_name}' cluster '{cluster_id}' ok - deploy id '{create_result.deploy.id}")
 
-    return fastapi.responses.RedirectResponse("/cube/deploys")
+    return fastapi.responses.RedirectResponse(referer_path)
 
 
 @app.get("/cube/deploys", response_class=fastapi.responses.HTMLResponse)

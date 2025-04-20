@@ -8,6 +8,7 @@ STATE_BUSY = "busy"
 STATE_IDLE = "idle"
 STATE_TERM = "term"
 
+STATE_ACTIVE = "active" # virtual state
 STATES_ACTIVE = [STATE_BUSY, STATE_IDLE]
 
 

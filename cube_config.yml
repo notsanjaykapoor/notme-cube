@@ -1,5 +1,7 @@
 projects:
   - name: notme-cube
     location: file:///Users/sanjaykapoor/notme/notme-cube/deploy/
+  - name: notme-fashion
+    location: file:///Users/sanjaykapoor/notme/notme-fashion/deploy/
   - name: notme-me
     location: file:///Users/sanjaykapoor/notme/me/deploy/

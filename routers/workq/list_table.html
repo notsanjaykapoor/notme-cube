@@ -9,18 +9,32 @@
     </p>
     {% endif %}
     <p class="text-xs font-bold mr-0">
-        <a href="/workers?query=state:active" class="text-blue-600">
-            workers: {{ workers_count }}
-        </a>
-        &nbsp;
+        {% if daemons_count == 0 %}
+        {% set daemons_color = "text-red-700" %}
+        {% set workers_color = "text-red-700" %}
+        {% else %}
+        {% set daemons_color = "text-blue-700" %}
+        {% set workers_color = "text-blue-700" %}
+        {% endif %}
+
         {% if backlog_count > 0 %}
         {% set backlog_color = "text-orange-600" %}
         {% else %}
-        {% set backlog_color = "text-sky-300" %}
+        {% set backlog_color = "text-slate-600" %}
         {% endif %}
 
+        <a href="/daemons" class="{{daemons_color}}">
+            daemons:&nbsp;{{ daemons_count }}
+        </a>
+        &nbsp;
+
+        <a href="/workers?query=state:active" class="{{workers_color}}">
+            workers:&nbsp;{{ workers_count }}
+        </a>
+        &nbsp;
+
         <span class="{{backlog_color}}">
-            backlog: {{ backlog_count }}
+            backlog:&nbsp;{{ backlog_count }}
         </span>
     </p>
 </div>

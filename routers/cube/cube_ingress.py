@@ -22,7 +22,7 @@ app = fastapi.APIRouter(
 )
 
 
-@app.get("/cube/ingress", response_class=fastapi.responses.HTMLResponse)
+@app.get("/ingress", response_class=fastapi.responses.HTMLResponse)
 def cube_ingress_list(
     request: fastapi.Request,
     query: str="",

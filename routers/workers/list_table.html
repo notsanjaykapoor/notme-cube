@@ -1,18 +1,18 @@
 <div class="flex w-12/12 justify-between mt-0 mx-5 mr-2">
     {% if query_code == 0 %}
-        <p class="text-xs font-bold text-black-700">
-            {{query_result}}
-        </p>
+    <p class="text-xs font-bold text-black-700">
+        {{query_result}}
+    </p>
     {% else %}
-        <p class="text-xs font-bold text-red-700">
-            {{query_result}}
-        </p>
+    <p class="text-xs font-bold text-red-700">
+        {{query_result}}
+    </p>
     {% endif %}
     <p class="text-xs mr-0">
         {% if backlog_count > 0 %}
-            {% set backlog_color = "text-orange-600" %}
+        {% set backlog_color = "text-orange-600" %}
         {% else %}
-            {% set backlog_color = "text-sky-300" %}
+        {% set backlog_color = "text-sky-300" %}
         {% endif %}
 
         <span class="font-bold {{backlog_color}}">
@@ -21,7 +21,7 @@
     </p>
 </div>
 
-<table class="mt-5 mx-5 w-full">
+<table class="mt-20 mx-5 w-full">
     <thead class="font-normal text-left text-xs leading-6 text-center text-zinc-800">
         <tr>
             <th class="p-4">name</th>
@@ -33,22 +33,22 @@
         </tr>
     </thead>
     <tbody>
-        {% for worker in worker_objects %}
+        {% for worker in workers_list %}
         <tr class="group hover:bg-zinc-50 odd:bg-white even:bg-slate-50 font-normal text-center text-xs">
             <td class="p-4">{{ worker.name }}</td>
             <td class="p-4 font-bold">
                 {% if worker.state == "term" %}
-                    <span class="cursor-help text-red-600" title="todo - error message">
-                        {{worker.state}}
-                    </span>
+                <span class="cursor-help text-red-600" title="todo - error message">
+                    {{worker.state}}
+                </span>
                 {% elif worker.state == "busy" %}
-                    <span class="text-blue-700">
-                        {{worker.state}}
-                    </span>
+                <span class="text-blue-700">
+                    {{worker.state}}
+                </span>
                 {% else %}
-                    <span class="text-sky-300">
-                        {{worker.state}}
-                    </span>
+                <span class="text-sky-300">
+                    {{worker.state}}
+                </span>
                 {% endif %}
             </td>
             <td class="p-4"></td>
@@ -56,11 +56,14 @@
             <td class="p-4">{{ worker.id }}</td>
             <td>
                 {% if worker.state == "idle" %}
-                    <a href="/workers/{{worker.name}}/shutdown" class="flex justify-center items-center" title="shutdown worker">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-blue-700">
-                            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                        </svg>
-                    </a>
+                <a href="/workers/{{worker.name}}/shutdown" class="flex justify-center items-center"
+                    title="shutdown worker">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                        class="size-4 text-blue-700">
+                        <path
+                            d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                    </svg>
+                </a>
                 {% endif %}
             </td>
         </tr>

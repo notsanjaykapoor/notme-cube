@@ -1,0 +1,36 @@
+<div class="flex flex-row mt-0">
+    <div class="w-1/12"></div>
+    <div class="w-10/12 border-b-2 border-slate-100 pb-5">
+        <p class="font-semibold text-xs text-black">
+            Trigger Deploy
+        </p>
+    </div>
+</div>
+
+<div class="flex flex-row mt-5 mb-20">
+    <div class="w-1/12"></div>
+    <div class="w-10/12">
+        <select
+            class="cluster-select px-0 pb-1.5 max-w-sm text-xs text-semibold text-blue-600 bg-transparent border-0 border-b border-none appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer disabled:border-0 disabled:bg-blue-gray-50">
+            <option selected>select cluster</option>
+            {% for cluster in clusters_list %}
+            <option value="/cube/deploy/projects/{{project.name}}?cluster_id={{cluster.name}}">
+                {{ cluster.name }}
+            </option>
+            {% endfor %}
+            </option>
+        </select>
+    </div>
+</div>
+
+<script>
+    // listen for select change events and redirect
+    const elements = document.getElementsByClassName("cluster-select")
+    const elements_count = elements.length
+
+    for (var i = 0; i < elements_count; i++) {
+        elements[i].addEventListener("change", function () {
+            window.location.href = this.value
+        })
+    }
+</script>

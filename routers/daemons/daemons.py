@@ -1,5 +1,3 @@
-import os
-
 import fastapi
 import fastapi.responses
 import fastapi.templating
@@ -8,11 +6,8 @@ import sqlmodel
 import context
 import log
 import main_shared
-import models
-import services.daemons
 import services.users
-import services.workq
-import services.workers
+import services.daemons
 
 
 logger = log.init("app")
@@ -27,8 +22,8 @@ app = fastapi.APIRouter(
 )
 
 
-@app.get("/workq", response_class=fastapi.responses.HTMLResponse)
-def workq_list(
+@app.get("/daemons", response_class=fastapi.responses.HTMLResponse)
+def daemons_list(
     request: fastapi.Request,
     query: str="",
     offset: int=0,
@@ -38,7 +33,7 @@ def workq_list(
 ):
     """
     """
-    logger.info(f"{context.rid_get()} workq list query '{query}'")
+    logger.info(f"{context.rid_get()} daemons list query '{query}'")
 
     if user_id == 0:
         return fastapi.responses.RedirectResponse("/login")
@@ -46,57 +41,43 @@ def workq_list(
     user = services.users.get_by_id(db_session=db_session, id=user_id)
 
     try:
-        workq_list_result = services.workq.list(db_session=db_session, query=query, offset=offset, limit=limit)
-        workq_objects = workq_list_result.objects
+        daemons_list_result = services.daemons.list(db_session=db_session, query=query, offset=offset, limit=limit)
+        daemons_list = daemons_list_result.objects
+        daemons_count = daemons_list_result.total
         query_code = 0
-        query_result = f"query '{query}' returned {workq_list_result.total} results"
+        query_result = f"query '{query}' returned {daemons_count} results"
 
-        workers_query = "state:active"
-        workers_list_result = services.workers.list(
-            db_session=db_session,
-            query=workers_query,
-            offset=offset,
-            limit=limit,
-        )
-        workers_count = len(workers_list_result.objects)
-
-        daemons_count = services.daemons.count_active(db_session=db_session)
-        backlog_count = services.workq.count_queued_all(db_session=db_session)
-
-        logger.info(f"{context.rid_get()} workq list query '{query}' ok")
+        logger.info(f"{context.rid_get()} daemons list query '{query}' ok")
     except Exception as e:
-        backlog_count = 0
+        daemons_list = []
         daemons_count = 0
-        workq_objects = []
-        workers_count = 0
         query_code = 400
         query_result = f"exception {e}"
-        logger.error(f"{context.rid_get()} workq list exception '{e}'")
+        logger.error(f"{context.rid_get()} daemons list exception '{e}'")
+
 
     if "HX-Request" in request.headers:
-        template = "workq/list_table.html"
+        template = "daemons/list_table.html"
     else:
-        template = "workq/list.html"
+        template = "daemons/list.html"
 
     try:
         response = templates.TemplateResponse(
             request,
             template,
             {
-                "app_name": "WorkQ",
-                "daemons_count": daemons_count,
-                "backlog_count": backlog_count,
+                "app_name": "Daemons",
                 "prompt_text": "search",
                 "query": query,
                 "query_code": query_code,
                 "query_result": query_result,
                 "user": user,
-                "workers_count": workers_count,
-                "workq_objects": workq_objects,
+                "daemons_count": daemons_count,
+                "daemons_list": daemons_list,
             }
         )
     except Exception as e:
-        logger.error(f"{context.rid_get()} workq render exception '{e}'")
+        logger.error(f"{context.rid_get()} daemons render exception '{e}'")
         return templates.TemplateResponse(request, "500.html", {})
 
     if "HX-Request" in request.headers:

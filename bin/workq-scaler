@@ -17,11 +17,11 @@ import sqlmodel
 import log
 import models
 import services.clusters.requests
+import services.daemons
 import services.database
 import services.hetzner.servers
 import services.machines
 import services.machines.containers
-import services.workers
 
 logger = log.init("api")
 
@@ -51,11 +51,12 @@ def signal_handler(signum, frame):
 
 @click.command()
 @click.option('--cluster', "cluster_name", default=None, required=True, help="cluster name to monitor and scale")
-@click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
+@click.option('--name', "daemon_name", default="workq-scaler", required=False, help="daemon name")
 @click.option('--request-interval', default=3, required=False, help="seconds interval to check cluster requests")
 @click.option('--health-interval', default=30, required=False, help="seconds interval to check cluster health")
+@click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
 @coro
-async def run(cluster_name: str, db_uri: str, request_interval: int, health_interval: int) -> dict:
+async def run(cluster_name: str, daemon_name: str, request_interval: int, health_interval: int, db_uri: str) -> dict:
     """
     The scaler is responsible for listening for incoming cluster requests and managing cluster machine size based on those requests.
 
@@ -83,12 +84,34 @@ async def run(cluster_name: str, db_uri: str, request_interval: int, health_inte
         if not cluster:
             raise ValueError(f"cluster '{cluster_name}' is invalid")
 
-        logger.info(f"[workq-scaler] cluster '{cluster.name}' starting")
+        # get or create daemon object
+
+        daemon_service = f"cluster-{cluster.name}"
+
+        daemon = services.daemons.get_by_name_service(
+            db_session=db_session,
+            name=daemon_name,
+            service=daemon_service,
+        )
+
+        daemon = daemon or services.daemons.create(
+            db_session=db_session,
+            name=daemon_name,
+            service=daemon_service,
+            state=models.daemon.STATE_STARTUP,
+        )
+
+        if daemon.state != models.daemon.STATE_RUNNING:
+            daemon.state = models.daemon.STATE_RUNNING
+            db_session.add(daemon)
+            db_session.commit()
+
+        logger.info(f"[{daemon_name}] cluster '{cluster.name}' starting")
 
         requests = services.clusters.requests.get_processing_by_cluster(db_session=db_session, cluster_id=cluster.id)
 
         if requests:
-            _cluster_recovery(db_session=db_session, cluster=cluster, requests=requests)
+            _cluster_recovery(db_session=db_session, cluster=cluster, daemon_name=daemon_name, requests=requests)
 
     while not shutdown:
         # use a new db session on each loop to make sure we don't get stale db data
@@ -97,7 +120,7 @@ async def run(cluster_name: str, db_uri: str, request_interval: int, health_inte
             request = services.clusters.requests.get_pending_by_cluster(db_session=db_session, cluster_id=cluster.id)
 
             if request:
-                logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has}")
+                logger.info(f"[{daemon_name}] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has}")
 
                 services.clusters.requests.process(
                     db_session=db_session,
@@ -108,7 +131,7 @@ async def run(cluster_name: str, db_uri: str, request_interval: int, health_inte
                 request = services.clusters.requests.get_by_id(db_session=db_session, id=request.id)
 
                 if request.state == models.cluster_request.STATE_COMPLETED:
-                    logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has}")
+                    logger.info(f"[{daemon_name}] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has}")
 
             # sleep whether or not we processed a request
 
@@ -119,50 +142,60 @@ async def run(cluster_name: str, db_uri: str, request_interval: int, health_inte
             health_unix_t2 = int(time.time())
 
             if (health_unix_t2 - health_unix_t1) >= health_interval:
-                _cluster_health(cluster=cluster)
+                _cluster_health(cluster=cluster, daemon_name=daemon_name)
                 health_unix_t1 = int(time.time())
 
-    logger.info("[workq-scaler] exiting")
+    with services.database.session.get() as db_session:
+        daemon.state = models.daemon.STATE_SHUTDOWN
+        db_session.add(daemon)
+        db_session.commit()
+
+    logger.info(f"[{daemon_name}] exiting")
 
 
-def _cluster_health(cluster: models.Cluster) -> int:
+def _cluster_health(cluster: models.Cluster, daemon_name: str) -> int:
     list_result = services.machines.list(cluster=cluster)
 
     for machine in list_result.objects_list:
-        logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' containers check")
+        logger.info(f"[{daemon_name}] cluster '{cluster.name}' machine '{machine.name}' containers check")
 
         check_result = services.machines.containers.check(machine=machine)
         containers_missing = check_result.containers_missing
 
         if check_result.docker_status != 0:
-            logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' docker down")
+            logger.info(f"[{daemon_name}] cluster '{cluster.name}' machine '{machine.name}' docker down")
 
             start_result = services.machines.containers.start_docker(machine=machine)
 
             if start_result.code == 0:
-                logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' docker up")
+                logger.info(f"[{daemon_name}] cluster '{cluster.name}' machine '{machine.name}' docker up")
             else:
-                logger.error(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' docker exception - {start_result.errors}")
+                logger.error(f"[{daemon_name}] cluster '{cluster.name}' machine '{machine.name}' docker exception - {start_result.errors}")
 
         if containers_missing:
-            logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' containers down {len(containers_missing)}")
+            logger.info(f"[{daemon_name}] cluster '{cluster.name}' machine '{machine.name}' containers down {len(containers_missing)}")
         else:
-            logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' containers ok")
+            logger.info(f"[{daemon_name}] cluster '{cluster.name}' machine '{machine.name}' containers ok")
 
         for container in containers_missing:
             start_result = services.machines.containers.start(machine=machine, service=container.name)
 
             if start_result.code == 0:
-                logger.info(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' container '{container.name}' up")
+                logger.info(f"[{daemon_name}] cluster '{cluster.name}' machine '{machine.name}' container '{container.name}' up")
             else:
-                logger.error(f"[workq-scaler] cluster '{cluster.name}' machine '{machine.name}' container '{container.name}' exception - {start_result.errors}")
+                logger.error(f"[{daemon_name}] cluster '{cluster.name}' machine '{machine.name}' container '{container.name}' exception - {start_result.errors}")
 
     return 0
                       
 
-def _cluster_recovery(db_session: sqlmodel.Session, cluster: models.Cluster, requests: list[models.ClusterRequest]) -> int:
+def _cluster_recovery(
+    db_session: sqlmodel.Session,
+    cluster: models.Cluster,
+    daemon_name: str,
+    requests: list[models.ClusterRequest],
+) -> int:
     for request in requests:
-        logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery try")
+        logger.info(f"[{daemon_name}] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery try")
 
         servers_struct = services.hetzner.servers.list(query=f"cluster:{cluster.name}")
         server_machines = servers_struct.objects_list
@@ -176,9 +209,9 @@ def _cluster_recovery(db_session: sqlmodel.Session, cluster: models.Cluster, req
             db_session.add(cluster)
             db_session.commit()
 
-            logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery with changes")
+            logger.info(f"[{daemon_name}] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery with changes")
         else:
-            logger.info(f"[workq-scaler] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery with no changes")
+            logger.info(f"[{daemon_name}] cluster '{cluster.name}' request {request.id} state '{request.state}' ask {request.size_ask} has {cluster.size_has} - recovery with no changes")
 
     return 0
 

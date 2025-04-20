@@ -72,6 +72,8 @@ def _docker_json_parse(docker_ps: str, query: str) -> typing.List[models.Contain
 
     json_lines = [json.loads(line) for line in docker_ps.split("\r\n") if line]
 
+    print("json_lines: ", json_lines) # xxx
+
     for json_object in json_lines:
         container = models.Container(
             id=json_object.get("ID"),

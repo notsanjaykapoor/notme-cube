@@ -44,7 +44,7 @@ def workers_list(
 
     try:
         workers_list_result = services.workers.list(db_session=db_session, query=query, offset=offset, limit=limit)
-        worker_objects = workers_list_result.objects
+        workers_list = workers_list_result.objects
         workers_count = workers_list_result.total
         query_code = 0
         query_result = f"query '{query}' returned {workers_list_result.total} results"
@@ -54,7 +54,7 @@ def workers_list(
         logger.info(f"{context.rid_get()} workers list query '{query}' ok")
     except Exception as e:
         backlog_count = 0
-        worker_objects = []
+        workers_list = []
         workers_count = 0
         query_code = 400
         query_result = f"exception {e}"
@@ -79,7 +79,7 @@ def workers_list(
                 "query_result": query_result,
                 "user": user,
                 "workers_count": workers_count,
-                "worker_objects": worker_objects,
+                "workers_list": workers_list,
             }
         )
     except Exception as e:

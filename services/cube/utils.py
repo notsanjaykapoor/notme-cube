@@ -4,6 +4,6 @@ import services.files
 
 
 def config_path() -> str:
-    source_dir, source_file = services.files.file_uri_parse(source_uri=os.environ.get("CUBE_CONFIG_PATH"))
+    source_path, _, _ = services.files.file_uri_parse(source_uri=os.environ.get("CUBE_CONFIG_PATH"))
 
-    return f"{source_dir}{source_file}"
+    return source_path

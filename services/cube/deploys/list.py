@@ -47,10 +47,13 @@ def list(db_session: sqlmodel.Session, query: str, offset: int, limit: int, sort
             if re.match(r"^~", value):
                 # like query
                 value_normal = re.sub(r"~", "", value)
-                dataset = dataset.where(model.name.like("%" + value_normal + "%"))  # type: ignore
+                dataset = dataset.where(model.name.like("%" + value_normal + "%"))
             else:
                 # match query
                 dataset = dataset.where(model.name == value)
+        elif token["field"] in ["project", "project-name"]:
+            value_normal = re.sub(r"~", "", value)
+            dataset = dataset.where(model.project_name.like("%" + value_normal + "%")) 
         elif token["field"] == "state":
             dataset = dataset.where(model.state == value)
 

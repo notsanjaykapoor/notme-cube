@@ -22,6 +22,7 @@ import context
 import log
 import models
 import services.clusters
+import services.daemons
 import services.database
 import services.nats
 import services.workq
@@ -54,26 +55,26 @@ def cli():
 def signal_handler(signum, frame):
     global shutdown
     shutdown = True
-    logger.info("[workq-daemon] signal handler ... shutting down")
+    logger.info("[workq-router] signal handler ... shutting down")
 
 
 @click.command()
 @click.option('--cluster', "cluster_name", default=None, required=True, help="cluster name and related queue to monitor")
-@click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
-@click.option('--name', "daemon_name", default="workq-daemon", required=False, help="daemon name")
+@click.option('--name', "daemon_name", default="workq-router", required=False, help="daemon name")
 @click.option('--interval', default=5, required=False, help="")
 @click.option('--subject', default="workers.*", required=False, help="nats subject name")
+@click.option('--db-uri', default="", required=False, help="db uri string, e.g. postgresql://postgres:postgres@postgres-dev:5433/db_src")
 @coro
-async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, subject: str):
+async def run(cluster_name: str, daemon_name: str, interval: int, subject: str, db_uri: str, ):
     """
-    The daemon is responsible for scheduling jobs and managing their state.  As jobs are added to the work queue, the daemon
+    The router is responsible for scheduling jobs and managing their state.  As jobs are added to the work queue, the daemon
     schedules them with available workers.  Each worker registers with the daemon and maintains its status with a heartbeat protocol.
 
-    The daemon uses 3 separate sets to track workers.  The startup workers set is generated on daemon startup by finding all workers
-    with jobs in a non-terminal state.  This can happen when the daemon is re-started and misses heartbeat messages and when workers
+    The router uses 3 separate sets to track workers.  The startup workers set is generated on daemon startup by finding all workers
+    with jobs in a non-terminal state.  This can happen when the router is re-started and misses heartbeat messages and when workers
     exit while processing a job.
 
-    The active workers set is maintained as the daemon receives heartbeat messages.
+    The active workers set is maintained as the router receives heartbeat messages.
 
     The exited workers set is the list of workers that exited, either through normal or abnormal exit.
 
@@ -85,7 +86,7 @@ async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, s
         - shutdown message is received
         - no heartbeat message is received for a while
  
-    The edge condition that is not accounted for is when both the daemon and worker is re-started just as the worker completes a job.
+    The edge condition that is not accounted for is when both the router and worker is re-started just as the worker completes a job.
     In this edge case, the completed message is never received and worker state will be lost on next startup since the worker is dynamically
     assigned an id.
     """
@@ -101,6 +102,27 @@ async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, s
             raise ValueError(f"cluster '{cluster_name}' is invalid")
 
         queue = cluster.queue
+
+        daemon_service = f"cluster-{cluster.name}"
+
+        # get or create daemon object
+        daemon = services.daemons.get_by_name_service(
+            db_session=db_session,
+            name=daemon_name,
+            service=daemon_service,
+        )
+
+        daemon = daemon or services.daemons.create(
+            db_session=db_session,
+            name=daemon_name,
+            service=daemon_service,
+            state=models.daemon.STATE_STARTUP,
+        )
+
+        if daemon.state != models.daemon.STATE_STARTUP:
+            daemon.state = models.daemon.STATE_STARTUP
+            db_session.add(daemon)
+            db_session.commit()
 
     # install signal handler
     signal.signal(signal.SIGINT, signal_handler)
@@ -134,6 +156,10 @@ async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, s
     with services.database.session.get() as db_session:
         await _workers_exited_check(db_session=db_session)
         await _workers_exited_cleanup(db_session=db_session)
+
+        daemon.state = models.daemon.STATE_RUNNING
+        db_session.add(daemon)
+        db_session.commit()
 
     logger.info(f"[{daemon_name}] queue '{queue}' client {nats_client_id} mode - running")
 
@@ -179,6 +205,11 @@ async def run(cluster_name: str, db_uri: str, daemon_name: str, interval: int, s
     logger.info(f"[{daemon_name}] queue '{queue}' client {nats_client_id} closing")
 
     await nats_client.close()
+
+    with services.database.session.get() as db_session:
+        daemon.state = models.daemon.STATE_SHUTDOWN
+        db_session.add(daemon)
+        db_session.commit()
 
     logger.info(f"[{daemon_name}] queue '{queue}' client {nats_client_id} exiting")
 
@@ -329,7 +360,7 @@ async def _workers_exited_check(db_session: sqlmodel.Session) -> int:
     HEARTBEAT_STALE_SECS seconds.
     """
 
-    workers = list(workers_active_set.union(workers_exited_set))
+    workers = list(workers_active_set.union(workers_startup_set))
 
     hearbeat_struct = services.workers.active_check(
         db_session=db_session,
@@ -352,6 +383,8 @@ async def _workers_exited_cleanup(db_session: sqlmodel.Session) -> int:
     Cleanup method after workers exit.
 
     If a worker was processing a job and it exited without completion then the job state should be reset to queued.
+
+    If the worker database state is anything other than terminated, update its state to terminated
     """
     logger.info(f"[{context.rid_get()}] workers exited cleanup - {len(workers_exited_set)}")
 
@@ -376,6 +409,17 @@ async def _workers_exited_cleanup(db_session: sqlmodel.Session) -> int:
             jobs_updated += 1
             logger.info(f"[{context.rid_get()}] workers exited cleanup - worker '{worker_id}' job {job.id} state set to '{job.state}'")
 
+        worker = services.workers.get_by_name(
+            db_session=db_session,
+            name=worker_id,
+        )
+
+        if worker and worker.state != models.worker.STATE_TERM:
+            worker.state = models.worker.STATE_TERM
+            db_session.add(worker)
+            db_session.commit()
+            logger.info(f"[{context.rid_get()}] workers exited cleanup - worker '{worker_id}' state set to '{worker.state}'")
+
         workers_processed.append(worker_id)
 
     for worker_id in workers_processed:
@@ -386,14 +430,25 @@ async def _workers_exited_cleanup(db_session: sqlmodel.Session) -> int:
 
 async def _workers_startup_list(db_session: sqlmodel.Session) -> int:
     """
-    On startup, get the list of workers with jobs in the processing state.  These jobs need to be transitioned to a terminal state
-    of completed or error.  
-    """
+    On startup, get the set of workers that could possibly be running.  This list can include:
 
+      - workers tied to any job in the processing state
+      - workers in a state other than terminated
+    """
     jobs = services.workq.get_processing_all(db_session=db_session)
 
     for job in jobs:
         workers_startup_set.add(job.worker)
+
+    workers_result = services.workers.list(
+        db_session=db_session,
+        query=f"state:{models.worker.STATE_ACTIVE}",
+        offset=0,
+        limit=1024,
+    )
+
+    for worker in workers_result.objects:
+        workers_startup_set.add(worker.name)
 
     logger.info(f"[{context.rid_get()}] workers startup list - {len(workers_startup_set)}")
 
